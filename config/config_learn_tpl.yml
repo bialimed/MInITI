@@ -1,0 +1,11 @@
+filters:
+  min_support: 100
+input:
+  R1_pattern:   # raw/{sample}_R1.fastq.gz
+  R2_pattern:   # raw/{sample}_R2.fastq.gz
+  aln_pattern:  # aln/{sample}.bam
+  excluded_samples: [Undetermined]
+  known_status:
+reference:
+  microsatellites:   # design/microsatellites.bed
+  sequences:    # genome/hg38.fa

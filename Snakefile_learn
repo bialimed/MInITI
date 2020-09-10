@@ -1,0 +1,140 @@
+__author__ = 'Frederic Escudie'
+__copyright__ = 'Copyright (C) 2020 IUCT-O'
+__license__ = 'GNU General Public License'
+__version__ = '1.0.0'
+__email__ = 'escudie.frederic@iuct-oncopole.fr'
+__status__ = 'prod'
+
+import re
+import glob
+from time import strftime, gmtime
+
+################################################### dev
+app_dir = os.path.dirname(workflow.snakefile)
+lib_dir = os.path.join(app_dir, "ext", "anacore")
+sys.path.insert(0, lib_dir)
+if os.getenv('PYTHONPATH') is None:
+    os.environ['PYTHONPATH'] = lib_dir
+else:
+    os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + os.pathsep + lib_dir
+os.environ['PATH'] = os.path.join(app_dir, "scripts") + os.pathsep + os.environ['PATH']
+###################################################
+
+
+########################################################################
+#
+# Functions
+#
+########################################################################
+def splFromPattern(pattern, excluded):
+    samples_pathes = glob.glob(pattern.replace("{sample}", "*"))
+    samples_names = set()
+    for spl in samples_pathes:
+        match = re.match("^" + pattern.replace("{sample}", "(.+)") + "$", spl)
+        samples_names.add(match.groups(1)[0])
+    return samples_names - set(excluded)  
+
+
+def getLogMessage(wf_name, msg, log_level="INFO"):
+    """
+    Return printable log message for the workflow.
+
+    :param wf_name: Name of the workflow.
+    :type wf_name: str
+    :param msg: Message content.
+    :type msg: str
+    :param log_level: Logging level.
+    :type log_level: str
+    :return: Printable log message.
+    :rtype: str
+    """
+    return '{} - {} [{}] {}'.format(
+        strftime("%Y-%m-%d %H:%M:%S", gmtime()),
+        wf_name,
+        log_level,
+        msg
+    )
+
+
+########################################################################
+#
+# Logging
+#
+########################################################################
+wf_name = "MSILearn"
+wf_version = __version__
+
+onstart:
+    print(getLogMessage(
+        wf_name,
+        "\033[34mStart\033[0m workflow on version: {}".format(wf_version)
+    ))
+
+onsuccess:
+    print(getLogMessage(
+        wf_name,
+        "Workflow completed \033[92msuccessfully\033[0m"
+    ))
+
+onerror:
+    print(getLogMessage(
+        wf_name,
+        "Execution \033[91mfailure\033[0m",
+        "ERROR"
+    ))
+
+
+########################################################################
+#
+# Process
+#
+########################################################################
+include: "rules/all_learn.smk"
+rule all:
+    input:
+        "microsat/microsatModel.json"
+
+# Alignment
+samples_names = None
+aln_pattern = config.get("input").get("alignment_pattern")
+if aln_pattern is not None:
+    samples_names = splFromPattern(aln_pattern, config.get("input")["excluded_samples"])
+else:
+    samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input").get("excluded_samples"))
+    aln_pattern = "aln/{sample}.bam"
+    bwa_mem(
+        in_reads=[config.get("input")["R1_pattern"], config.get("input")["R2_pattern"]],
+        in_reference_seq=config.get("reference")["sequences"],
+        out_alignments=aln_pattern + ".tmp",
+        params_threads=1
+    )
+    markDuplicates(
+        in_alignments=aln_pattern + ".tmp",
+        out_alignments=aln_pattern,
+        out_metrics="aln/{sample}_markDup.tsv",
+        out_stderr="logs/{sample}_markDup_stderr.txt",
+    )
+
+# Create model
+microsatLenDistrib(
+    in_alignments=aln_pattern,
+    in_microsatellites=config.get("reference")["microsatellites"],
+    params_method_name="model"
+)
+microsatStatusToAnnot(
+    in_loci_status=config.get("input")["known_status"],
+    in_microsatellites=config.get("reference")["microsatellites"],
+    out_loci_status="microsat/modelStatus.tsv",
+    params_locus_id=False
+)
+microsatCreateModel(
+    in_loci_status="microsat/modelStatus.tsv",
+    in_microsatellites=config.get("reference")["microsatellites"],
+    in_length_distributions=expand("microsat/{sample}_microsatLenDistrib.json", sample=samples_names),
+    out_model="microsat/microsatModel.json",
+    params_min_support=config.get("filters")["min_support"],
+    params_keep_output=True
+)
+
+# Analysis report
+# wfReport()

@@ -1,0 +1,25 @@
+/*!
+  * dynamicTable component v1.4.0
+  * Copyright 2018 IUCT-O
+  * Author Frederic Escudie
+  * Licensed under GNU General Public License
+  */
+.dtable-head-btn{margin-left:10px;margin-right:10px}
+
+
+/*!
+  * AnaCore-web msi component v1.0.0
+  * Copyright 2020 IUCT-O
+  * Author Frederic Escudie
+  * Licensed under GNU General Public License
+  */
+.msi-label{display:inline;padding:.01em .6em .02em;color:#fff;font-size:75%;font-weight:400;line-height:1.5;text-align:center;white-space:nowrap;vertical-align:baseline;padding-right:.6em;padding-left:.6em;border-radius:10rem;border-style:solid;border-width:2px;box-sizing:border-box}.msi-label-danger{border-color:#d9534f;background-color:#d9534f}.msi-label-warning{border-color:#f0ad4e;background-color:#f0ad4e}.msi-label-success{background-color:#007bff;border-color:#007bff}.msi-label-good{border-color:#5cb85c;background-color:#5cb85c}.msi-sticker{border:solid .2em transparent;text-align:center;vertical-align:middle}.msi-sticker.MSI{border-left-color:#009688;background-color:#e0f2f1}.msi-sticker.MSS{border-left-color:#673ab7;background-color:#ede7f6}.msi-sticker.Undetermined{border-left-color:#f44336;background-color:#ffebee}
+
+
+/*!
+  * App v1.1.0
+  * Copyright 2018 IUCT-O
+  * Author Frederic Escudie
+  * Licensed under GNU General Public License
+  */
+body{background-color:#d3d3d3}.page-content{width:96%;margin-top:65px;margin-left:auto;margin-right:auto}.card{margin-top:10px;margin-bottom:20px;background-color:#fff;border-left:solid .3em #6200ee;box-shadow:0 4px 16px rgba(0,0,0,.12)}.card-header{color:#6200ee;background-color:#fff}.card-block{-webkit-box-flex:1;-webkit-flex:1 1 auto;-ms-flex:1 1 auto;flex:1 1 auto;padding:1.25rem}.multiselect{text-align:center}caption{caption-side:top}nav.fixed-top{background-color:#5607e8;height:55px;color:#fff;box-shadow:0 .5rem 1rem rgba(0,0,0,.05),inset 0 -1px 0 rgba(0,0,0,.1)}.app-spl-link{color:#fff;background-color:#007bff;border-color:#fff;text-align:center}.app-spl-link:hover{color:#000;border:1px solid rgba(0,0,0,.125);background-color:#fff;text-align:center}.app-spl-link:visited:hover{color:#000;border:1px solid rgba(0,0,0,.125);background-color:#fff;text-align:center}.app-spl-link:visited{color:#fff;background-color:#6200ee;border-color:#fff;text-align:center}

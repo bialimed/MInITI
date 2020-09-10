@@ -1,0 +1,155 @@
+__author__ = 'Frederic Escudie'
+__copyright__ = 'Copyright (C) 2020 IUCT-O'
+__license__ = 'GNU General Public License'
+__version__ = '1.0.0'
+__email__ = 'escudie.frederic@iuct-oncopole.fr'
+__status__ = 'prod'
+
+import re
+import glob
+from time import strftime, gmtime
+
+################################################### dev
+app_dir = os.path.dirname(workflow.snakefile)
+lib_dir = os.path.join(app_dir, "ext", "anacore")
+sys.path.insert(0, lib_dir)
+if os.getenv('PYTHONPATH') is None:
+    os.environ['PYTHONPATH'] = lib_dir
+else:
+    os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + os.pathsep + lib_dir
+os.environ['PATH'] = os.path.join(app_dir, "scripts") + os.pathsep + os.environ['PATH']
+###################################################
+
+########################################################################
+#
+# Functions
+#
+########################################################################
+def splFromPattern(pattern, excluded):
+    samples_pathes = glob.glob(pattern.replace("{sample}", "*"))
+    samples_names = set()
+    for spl in samples_pathes:
+        match = re.match("^" + pattern.replace("{sample}", "(.+)") + "$", spl)
+        samples_names.add(match.groups(1)[0])
+    return samples_names - set(excluded)  
+
+
+def getLogMessage(wf_name, msg, log_level="INFO"):
+    """
+    Return printable log message for the workflow.
+
+    :param wf_name: Name of the workflow.
+    :type wf_name: str
+    :param msg: Message content.
+    :type msg: str
+    :param log_level: Logging level.
+    :type log_level: str
+    :return: Printable log message.
+    :rtype: str
+    """
+    return '{} - {} [{}] {}'.format(
+        strftime("%Y-%m-%d %H:%M:%S", gmtime()),
+        wf_name,
+        log_level,
+        msg
+    )
+
+
+########################################################################
+#
+# Logging
+#
+########################################################################
+wf_name = "MSITag"
+wf_version = __version__
+
+onstart:
+    print(getLogMessage(
+        wf_name,
+        "\033[34mStart\033[0m workflow on version: {}".format(wf_version)
+    ))
+
+onsuccess:
+    print(getLogMessage(
+        wf_name,
+        "Workflow completed \033[92msuccessfully\033[0m"
+    ))
+
+onerror:
+    print(getLogMessage(
+        wf_name,
+        "Execution \033[91mfailure\033[0m",
+        "ERROR"
+    ))
+
+
+########################################################################
+#
+# Parameters
+#
+########################################################################
+samples_names = None
+aln_pattern = config.get("input").get("alignment_pattern")
+if aln_pattern is not None:
+    samples_names = splFromPattern(aln_pattern, config.get("input")["excluded_samples"])
+else:
+    samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input")["excluded_samples"])
+
+
+########################################################################
+#
+# Process
+#
+########################################################################
+include: "rules/all_tag.smk"
+rule all:
+    input:
+        expand("report/{sample}.html", sample=samples_names),
+        "report/run.html"
+
+# Alignment
+if aln_pattern is None:
+    aln_pattern = "aln/{sample}.bam"
+    bwa_mem(
+        in_reads=[config.get("input")["R1_pattern"], config.get("input")["R2_pattern"]],
+        in_reference_seq=config.get("reference")["sequences"],
+        out_alignments=aln_pattern + ".tmp",
+        params_threads=1
+    )
+    markDuplicates(
+        in_alignments=aln_pattern + ".tmp",
+        out_alignments=aln_pattern,
+        out_metrics="aln/{sample}_markDup.tsv",
+        out_stderr="logs/{sample}_markDup_stderr.txt",
+    )
+
+# Classify
+microsatLenDistrib(
+    in_alignments=aln_pattern,
+    in_microsatellites=config.get("reference")["microsatellites"],
+    params_method_name=config.get("classifier")["locus"]["classifier"]
+)
+consensus_method = config.get("classifier")["sample"].get("consensus_method", "ratio")
+param_threshold = "params_instability_" + consensus_method
+microsatStabilityClassify(**{
+    "in_model": config.get("classifier")["model"],
+    "params_classifier": config.get("classifier")["locus"]["classifier"],
+    "params_classifier_params": config.get("classifier")["locus"]["classifier_params"],
+    "params_consensus_method": consensus_method,
+    param_threshold: config.get("classifier")["sample"]["instability_threshold"],
+    "params_locus_weight_is_score": config.get("classifier")["sample"]["locus_weight_is_score"],
+    "params_method_name": config.get("classifier")["locus"]["classifier"],
+    "params_min_support": config.get("classifier")["locus"]["min_support"],
+    "params_min_voting_loci": config.get("classifier")["sample"]["min_voting_loci"],
+    "params_random_seed": config.get("classifier")["random_seed"],
+    "params_undetermined_weight": config.get("classifier")["sample"]["undetermined_weight"]
+})
+
+# Analysis report
+wfReport(
+    config.get("classifier")["model"],
+    samples_names,
+    in_classification="microsat/{sample}_stabilityStatus.json",
+    params_classification_method_name="SVC",
+    params_data_method_name=config.get("classifier")["locus"]["classifier"]
+)
