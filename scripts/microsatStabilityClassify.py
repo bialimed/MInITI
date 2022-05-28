@@ -12,7 +12,7 @@ import sys
 import json
 import logging
 import argparse
-from anacore.msi import LocusClassifier, MSIReport, Status
+from anacore.msi.base import LocusClassifier, MSIReport, Status
 from sklearn.tree import DecisionTreeClassifier as DecisionTree
 from sklearn.neighbors import KNeighborsClassifier as KNeighbors
 from sklearn.linear_model import LogisticRegression

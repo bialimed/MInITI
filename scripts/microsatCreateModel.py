@@ -13,8 +13,8 @@ import logging
 import argparse
 from copy import deepcopy
 from anacore.bed import BEDIO
-from anacore.msi import LocusResPairsCombi, MSILocus, MSIReport, Status
-from anacore.msiannot import addLociResToSpl, getLocusAnnotDict, MSIAnnot
+from anacore.msi.base import LocusResPairsCombi, MSILocus, MSIReport, Status
+from anacore.msi.annot import addLociResToSpl, getLocusAnnotDict, MSIAnnot
 
 
 ########################################################################

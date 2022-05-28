@@ -12,7 +12,7 @@ import sys
 import json
 import logging
 import argparse
-from anacore.msi import MSIReport
+from anacore.msi.base import MSIReport
 
 
 ########################################################################

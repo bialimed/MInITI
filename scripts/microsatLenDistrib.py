@@ -12,7 +12,7 @@ import sys
 import pysam
 import logging
 import argparse
-from anacore.msi import LocusResDistrib, LocusResPairsCombi, MSILocus, MSIReport, MSISample
+from anacore.msi.base import LocusResDistrib, LocusResPairsCombi, MSILocus, MSIReport, MSISample
 from anacore.bed import getAreas
 
 

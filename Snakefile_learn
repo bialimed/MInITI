@@ -61,7 +61,7 @@ def getLogMessage(wf_name, msg, log_level="INFO"):
 # Logging
 #
 ########################################################################
-wf_name = "MSILearn"
+wf_name = "MInITI_learn"
 wf_version = __version__
 
 onstart:

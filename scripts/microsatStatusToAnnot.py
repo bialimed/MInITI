@@ -13,8 +13,8 @@ import logging
 import argparse
 from anacore.bed import BEDIO
 from anacore.sv import HashedSVIO
-from anacore.msi import Status
-from anacore.msiannot import MSIAnnot
+from anacore.msi.base import Status
+from anacore.msi.annot import MSIAnnot
 
 
 ########################################################################
