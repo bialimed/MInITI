@@ -1,7 +1,11 @@
 classifier:
   locus:
-    classifier: SVC
-    classifier_params:
+    sklearn:
+      classifier: SVC
+      classifier_params:
+    msings:
+      peak_height_cutoff: 0.05
+      std_dev_rate: 2.0
     min_support: 100
   model:  # learn/microsat/microsatModel.json
   random_seed: 0

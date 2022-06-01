@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'Frederic Escudie'
-__copyright__ = 'Copyright (C) 2020 IUCT-O'
+__copyright__ = 'Copyright (C) 2020 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
@@ -14,6 +14,52 @@ import logging
 import argparse
 from anacore.msi.base import LocusResDistrib, LocusResPairsCombi, MSILocus, MSIReport, MSISample
 from anacore.bed import getAreas
+
+
+########################################################################
+#
+# FUNCTIONS
+#
+########################################################################
+def getMicrosatLengths(aln_reader, microsat, padding=2):
+    """
+    Return length distribution for the microsatellite from reads.
+
+    :param aln_reader: Handle to alignments file.
+    :type aln_reader: pysam.AlignmentFile
+    :param microsat: Microsatellite region.
+    :type microsat: anacore.region.Region
+    :param padding: Minimum number of nucleotids aligned on each side around the microsatellite to take read into account. This parameter is used to skip reads containing an incomplete microsatellite.
+    :type padding: int
+    :return: Length distribution for the microsatellite from reads.
+    :rtype: dict
+    """
+    ms_start_0 = microsat.start - 1
+    ms_end_0 = microsat.end - 1
+    nb_by_length = {}
+    for read in aln_reader.fetch(microsat.reference.name, ms_start_0, microsat.end):  # For each read ovelapping current microsat
+        if not read.is_duplicate and not read.is_secondary:
+            if read.reference_start + 1 <= microsat.start - padding and read.reference_end >= microsat.end + padding:  # Align on microsat and padding
+                read_ms_length = 0
+                none_before_start = 0
+                prev_pos = -1
+                for pos in read.get_reference_positions(full_length=True):  # Get length of microsat in read
+                    if pos is None:
+                        if prev_pos >= ms_start_0 and prev_pos <= ms_end_0:
+                            read_ms_length += 1
+                            none_before_start = 0
+                        else:
+                            none_before_start += 1
+                    else:
+                        if pos >= ms_start_0 and pos <= ms_end_0:
+                            read_ms_length += 1 + none_before_start
+                        none_before_start = 0
+                        prev_pos = pos
+                if read_ms_length in nb_by_length:
+                    nb_by_length[read_ms_length] += 1
+                else:
+                    nb_by_length[read_ms_length] = 1
+    return nb_by_length
 
 
 ########################################################################
@@ -44,38 +90,13 @@ if __name__ == "__main__":
     log.info("Command: " + " ".join(sys.argv))
 
     # Load microsatellites regions
-    microsat = getAreas(args.input_microsatellites) 
+    microsat = getAreas(args.input_microsatellites)
 
     # Load microsatellites size distribution
     locus_by_id = dict()
     with pysam.AlignmentFile(args.input_alignments, "rb") as aln_reader:
         for curr_ms in microsat:
-            # Get microsatellile length
-            ms_start_0 = curr_ms.start - 1
-            ms_end_0 = curr_ms.end - 1
-            nb_by_length = {}
-            for read in aln_reader.fetch(curr_ms.reference.name, ms_start_0, curr_ms.end):  # For each read ovelapping current microsat
-                if not read.is_duplicate and not read.is_secondary:
-                    if read.reference_start + 1 <= curr_ms.start - args.padding and read.reference_end >= curr_ms.end + args.padding:  # Align on microsat and padding
-                        read_ms_length = 0
-                        none_before_start = 0
-                        prev_pos = -1
-                        for pos in read.get_reference_positions(full_length=True):  # Get length of microsat in read
-                            if pos is None:
-                                if prev_pos >= ms_start_0 and prev_pos <= ms_end_0:
-                                    read_ms_length += 1
-                                    none_before_start = 0
-                                else:
-                                    none_before_start += 1
-                            else:
-                                if pos >= ms_start_0 and pos <= ms_end_0:
-                                    read_ms_length += 1 + none_before_start
-                                none_before_start = 0
-                                prev_pos = pos
-                        if read_ms_length in nb_by_length:
-                            nb_by_length[read_ms_length] += 1
-                        else:
-                            nb_by_length[read_ms_length] = 1
+            nb_by_length = getMicrosatLengths(aln_reader, curr_ms, args.padding)
             # Create locus entry
             locus_id = "{}:{}-{}".format(curr_ms.reference.name, curr_ms.start - 1, curr_ms.end)
             res_class = LocusResPairsCombi if args.reads_stitched else LocusResDistrib

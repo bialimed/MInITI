@@ -23,7 +23,13 @@
       vmem: "3G",
       threads: 1
   },
-  microsatStabilityClassify: {
+  microsatMsingsClassify: {
+      queue: "normal",
+      mem: "5G",
+      vmem: "5G",
+      threads: 1
+  },
+  microsatSklearnClassify: {
       queue: "normal",
       mem: "10G",
       vmem: "10G",

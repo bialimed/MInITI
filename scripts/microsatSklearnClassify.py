@@ -71,28 +71,28 @@ def process(args):
     # Classification by locus
     loci_ids = sorted(train_dataset[0].loci.keys())
     for locus_id in loci_ids:
-        # Select the samples with a sufficient number of fragment for classify the distribution
+        # Select the samples with a sufficient number of fragment to classify distribution
         evaluated_test_dataset = []
         for spl in test_dataset:
-            if spl.loci[locus_id].results[args.method_name].getCount() < args.min_support:
-                spl.loci[locus_id].results[args.method_name].status = Status.undetermined
-                spl.loci[locus_id].results[args.method_name].score = None
+            if spl.loci[locus_id].results[args.status_method].getCount() < args.min_depth:
+                spl.loci[locus_id].results[args.status_method].status = Status.undetermined
+                spl.loci[locus_id].results[args.status_method].score = None
             else:
                 evaluated_test_dataset.append(spl)
         # Classify
         if len(evaluated_test_dataset) != 0:
-            clf = MIAmSClassifier(locus_id, args.method_name, "model", args.classifier, args.classifier_params)
+            clf = MIAmSClassifier(locus_id, args.status_method, "model", args.classifier, args.classifier_params)
             clf.fit(train_dataset)
             clf.set_status(evaluated_test_dataset)
     # Classification by sample
     for spl in test_dataset:
         if args.consensus_method == "majority":
-            spl.setStatusByMajority(args.method_name, args.min_voting_loci)
+            spl.setStatusByMajority(args.status_method, args.min_voting_loci)
         elif args.consensus_method == "ratio":
-            spl.setStatusByInstabilityRatio(args.method_name, args.min_voting_loci, args.instability_ratio)
+            spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
         elif args.consensus_method == "count":
-            spl.setStatusByInstabilityCount(args.method_name, args.min_voting_loci, args.instability_count)
-        spl.setScore(args.method_name, args.undetermined_weight, args.locus_weight_is_score)
+            spl.setStatusByInstabilityCount(args.status_method, args.min_voting_loci, args.instability_count)
+        spl.setScore(args.status_method, args.undetermined_weight, args.locus_weight_is_score)
     # Write output
     MSIReport.write(test_dataset, args.output_report)
 
@@ -104,13 +104,14 @@ def process(args):
 ########################################################################
 if __name__ == "__main__":
     # Manage parameters
-    parser = argparse.ArgumentParser(description='Predict stability classes and score for all samples loci.')
-    parser.add_argument('-m', '--method-name', default="MIAmS", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using an sklearn classifer.')
+    parser.add_argument('--data-method', default="aln", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--status-method', help='The name of the method storing locus metrics and where the status will be set. [Default: classifier name]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
     group_locus.add_argument('-k', '--classifier', default="SVC", choices=["DecisionTree", "KNeighbors", "LogisticRegression", "RandomForest", "SVC"], help='The classifier used to predict loci status.')
     group_locus.add_argument('-p', '--classifier-params', action=ClassifierParamsAction, default={}, help='By default the classifier is used with these default parameters defined in scikit-learn. If you want change these parameters you use this option to provide them as json string. Example: {"n_estimators": 1000, "criterion": "entropy"} for RandmForest.')
-    group_locus.add_argument('-f', '--min-support', default=150, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')
+    group_locus.add_argument('-f', '--min-depth', default=150, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')
     group_locus.add_argument('-s', '--random-seed', default=None, type=int, help='The seed used by the random number generator in the classifier.')
     group_status = parser.add_argument_group('Sample consensus status')  # Sample status
     group_status.add_argument('-c', '--consensus-method', default='ratio', choices=['count', 'majority', 'ratio'], help='Method used to determine the sample status from the loci status. Count: if the number of unstable is upper or equal than instability-count the sample will be unstable otherwise it will be stable ; Ratio: if the ratio of unstable/determined loci is upper or equal than instability-ratio the sample will be unstable otherwise it will be stable ; Majority: if the ratio of unstable/determined loci is upper than 0.5 the sample will be unstable, if it is lower than stable the sample will be stable. [Default: %(default)s]')
@@ -132,6 +133,8 @@ if __name__ == "__main__":
     if args.consensus_method != "count" and args.instability_count != parser.get_default('instability_count'):
         raise Exception('The parameter "instability-count" can only used with consensus-ratio set to "count".')
     args.classifier_params["random_state"] = args.random_seed
+    if args.status_method is None:
+        args.status_method = args.classifier
 
     # Logger
     logging.basicConfig(format='%(asctime)s -- [%(filename)s][pid:%(process)d][%(levelname)s] -- %(message)s')

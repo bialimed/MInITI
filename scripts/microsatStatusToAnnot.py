@@ -25,7 +25,7 @@ from anacore.msi.annot import MSIAnnot
 def process(args, log):
     """
     Convert MSI status file (splA<tab>status_locus_1<tab>status_locus_2) in MSI annotation file.
-    
+
     :param args: The namespace extracted from the script arguments.
     :type args: Namespace
     :param log: The logger of the script.
