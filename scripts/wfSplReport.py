@@ -23,7 +23,7 @@ from anacore.msi.base import MSIReport, Status
 def getHigherPeakByLocus(models, min_support_reads=0):
     """
     Return length of the higher peak of each model by locus.
-    
+
     :param models: The list of MSIReport representing the models (status known and stored in Expected result).
     :type models: list
     :param min_support_reads: The minimum number of reads on locus to use the stability status of the current model.
@@ -38,10 +38,11 @@ def getHigherPeakByLocus(models, min_support_reads=0):
             if locus_id not in higher_by_locus:
                 higher_by_locus[locus_id] = []
             if "model" in curr_locus.results:
-                if curr_locus.results["model"].status == Status.stable and curr_locus.results["model"].getCount() > min_support_reads / 2:
+                locus_res = curr_locus.results["model"]
+                if locus_res.status == Status.stable and locus_res.data["lengths"].getCount() > min_support_reads / 2:
                     max_peak = None
                     max_count = -1
-                    for length, count in curr_locus.results["model"].data["nb_by_length"].items():
+                    for length, count in locus_res.data["lengths"].items():
                         if count >= max_count:  # "=" for select the tallest
                             max_count = count
                             max_peak = int(length)

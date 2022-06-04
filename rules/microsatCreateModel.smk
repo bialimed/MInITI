@@ -26,7 +26,7 @@ def microsatCreateModel(
         log:
             out_stderr
         params:
-            bin_path = "microsatCreateModel.py",
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatCreateModel.py")),
             min_support = "" if params_min_support is None else "--min-support {}".format(params_min_support),
             stderr_redirection = "2>" if not params_stderr_append else "2>>"
         conda:

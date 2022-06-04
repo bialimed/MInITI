@@ -3,18 +3,20 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2018 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-import os
-import sys
-import logging
+from anacore.bed import BEDIO
+from anacore.msi.annot import addLociResToSpl, getLocusAnnotDict, MSIAnnot
+from anacore.msi.base import Status
+from anacore.msi.locus import Locus
+from anacore.msi.reportIO import ReportIO
 import argparse
 from copy import deepcopy
-from anacore.bed import BEDIO
-from anacore.msi.base import LocusResPairsCombi, MSILocus, MSIReport, Status
-from anacore.msi.annot import addLociResToSpl, getLocusAnnotDict, MSIAnnot
+import logging
+import os
+import sys
 
 
 ########################################################################
@@ -33,8 +35,7 @@ def getAggregatedSpl(in_reports):
     """
     aggregated_spl = []
     for curr_report in in_reports:
-        print(curr_report)
-        msi_samples = MSIReport.parse(curr_report)
+        msi_samples = ReportIO.parse(curr_report)
         for curr_spl in msi_samples:
             aggregated_spl.append(curr_spl)
     return aggregated_spl
@@ -45,7 +46,7 @@ def writeStatusMetrics(msi_samples, result_id, out_summary):
     Write the statistics of status by loci in population of samples.
 
     :param msi_samples: The samples processed.
-    :type msi_samples: list of MSISample
+    :type msi_samples: list of MSI samples
     :param result_id: Only the results of this methd are processed.
     :type result_id: str
     :param out_summary: Path to the output file.
@@ -88,7 +89,7 @@ def populateLoci(msi_samples, ref_loci):
     Add loci if they are missing in sample.
 
     :param msi_samples: The samples to populate.
-    :type msi_samples: list of MSISample
+    :type msi_samples: list of MSI samples
     :param ref_loci: The loci to add if they are missing in samples.
     :type ref_loci: str
     """
@@ -118,7 +119,7 @@ def pruneResults(msi_samples, result_id, min_support):
             if result_id in msi_locus.results:
                 if msi_locus.results[result_id].status not in [Status.stable, Status.unstable]:
                     msi_locus.delResult(result_id)
-                elif msi_locus.results[result_id].getCount() < min_support:
+                elif msi_locus.results[result_id].data["lengths"].getCount() < min_support:
                     msi_locus.delResult(result_id)
                 else:
                     nb_results += 1
@@ -148,7 +149,7 @@ def process(args):
     with BEDIO(args.input_microsatellites) as FH_in:
         for record in FH_in:
             ref_loci.append(
-                MSILocus(
+                Locus(
                     "{}:{}-{}".format(record.chrom, record.start - 1, record.end),
                     record.name
                 )
@@ -158,14 +159,14 @@ def process(args):
     # Add locus result info
     data_by_spl = getLocusAnnotDict(args.input_loci_status)
     for curr_spl in msi_samples:
-        addLociResToSpl(curr_spl, data_by_spl[curr_spl.name], LocusResPairsCombi)
+        addLociResToSpl(curr_spl, data_by_spl[curr_spl.name])
     # Filter locus results
     populateLoci(msi_samples, ref_loci)
     pruneResults(msi_samples, result_id, args.min_support)
     # Display metrics
     writeStatusMetrics(msi_samples, result_id, args.output_info)
     # Write output
-    MSIReport.write(msi_samples, args.output_model)
+    ReportIO.write(msi_samples, args.output_model)
 
 
 ########################################################################

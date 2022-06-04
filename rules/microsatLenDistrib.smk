@@ -25,7 +25,7 @@ def microsatLenDistrib(
         log:
             out_stderr
         params:
-            bin_path = "microsatLenDistrib.py",
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatLenDistrib.py")),
             method_name = "" if params_method_name is None else "--method-name {}".format(params_method_name),
             padding = "" if params_padding is None else "--padding {}".format(params_padding),
             reads_stitched = "--reads-stitched" if params_reads_stitched is True else "",

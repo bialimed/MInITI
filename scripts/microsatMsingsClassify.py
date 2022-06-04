@@ -7,7 +7,9 @@ __version__ = '1.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-from anacore.msi.base import LocusRes, MSIReport, Status
+from anacore.msi.base import Status
+from anacore.msi.locus import LocusRes
+from anacore.msi.reportIO import ReportIO
 import argparse
 import logging
 from numpy import average, std
@@ -35,7 +37,7 @@ def getModelBaseline(locus_models, peak_height_cutoff=0.05):
     for curr_ref in locus_models:
         if curr_ref.results["model"].status == Status.stable:
             models_nb_peaks.append(
-                getMSINGSNbPeaks(curr_ref.results["model"].data["nb_by_length"], peak_height_cutoff)
+                getMSINGSNbPeaks(curr_ref.results["model"].data["lengths"], peak_height_cutoff)
             )
     return {
         "average": average(models_nb_peaks),
@@ -72,23 +74,26 @@ def getStatus(nb_peaks, models_peaks, std_dev_rate):
 
 
 def process(args):
-    msi_evaluated = MSIReport.parse(args.input_evaluated)
+    msi_evaluated = ReportIO.parse(args.input_evaluated)
     # Classify loci
-    msi_models = MSIReport.parse(args.input_model)
+    msi_models = ReportIO.parse(args.input_model)
     model_baseline = dict()
     for msi_spl in msi_evaluated:
         for locus in msi_spl:
+            # Model
             if locus.position not in model_baseline:
                 model_baseline[locus.position] = getModelBaseline(
                     [curr_model.loci[locus.position] for curr_model in msi_models if locus.position in curr_model.loci],
                     args.peak_height_cutoff
                 )
             models_peaks = model_baseline[locus.position]
-            locus_res_src = locus.results[args.data_method]
-            locus_res = LocusRes(data=locus_res_src.data)
-            locus_res._class = locus.results[args.data_method]._class
-            if locus_res_src.getCount() >= args.min_depth:
-                nb_peaks = getMSINGSNbPeaks(locus_res_src.data["nb_by_length"], args.peak_height_cutoff)
+            # Classify
+            locus_data = locus.results[args.data_method].data
+            if args.data_method != args.status_method:  # Data come from another method
+                locus_data = {"lengths": locus_data["lengths"]}
+            locus_res = LocusRes(Status.undetermined, None, locus_data)
+            if locus_data["lengths"].getCount() >= args.min_depth:
+                nb_peaks = getMSINGSNbPeaks(locus_data["lengths"], args.peak_height_cutoff)
                 locus_res.status = getStatus(nb_peaks, models_peaks, args.std_dev_rate)
                 locus_res.score = getScore(nb_peaks, models_peaks)
             locus.results[args.status_method] = locus_res
@@ -101,7 +106,7 @@ def process(args):
             msi_spl.setStatusByInstabilityCount(args.status_method, args.min_voting_loci, args.instability_count)
         msi_evaluated.setScore(args.status_method, args.undetermined_weight, args.locus_weight_is_score)
     # Write output
-    MSIReport.write(msi_evaluated, args.output_report)
+    ReportIO.write(msi_evaluated, args.output_report)
 
 
 ########################################################################
@@ -111,8 +116,8 @@ def process(args):
 ########################################################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using mSINGS v4.0 like algorithm.')
-    parser.add_argument('-d', '--data-method', default="aln", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
-    parser.add_argument('-s', '--status-method', default="mSINGSLike", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('-d', '--data-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('-s', '--status-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
     group_locus.add_argument('-m', '--min-depth', default=150, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')

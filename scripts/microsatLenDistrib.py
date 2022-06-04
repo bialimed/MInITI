@@ -7,13 +7,15 @@ __version__ = '1.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-import os
-import sys
-import pysam
-import logging
-import argparse
-from anacore.msi.base import LocusResDistrib, LocusResPairsCombi, MSILocus, MSIReport, MSISample
 from anacore.bed import getAreas
+from anacore.msi.locus import Locus, LocusDataDistrib, LocusRes
+from anacore.msi.reportIO import ReportIO
+from anacore.msi.sample import MSISample
+import argparse
+import logging
+import os
+import pysam
+import sys
 
 
 ########################################################################
@@ -99,20 +101,24 @@ if __name__ == "__main__":
             nb_by_length = getMicrosatLengths(aln_reader, curr_ms, args.padding)
             # Create locus entry
             locus_id = "{}:{}-{}".format(curr_ms.reference.name, curr_ms.start - 1, curr_ms.end)
-            res_class = LocusResPairsCombi if args.reads_stitched else LocusResDistrib
-            locus_by_id[locus_id] = MSILocus(
+            locus_by_id[locus_id] = Locus(
                 locus_id,
                 curr_ms.name,
                 {
-                    args.method_name: res_class(
+                    args.method_name: LocusRes(
                         status=None,
-                        data={"nb_by_length": nb_by_length}
+                        data={
+                            "lengths": LocusDataDistrib(
+                                nb_by_length,
+                                "fragments" if args.reads_stitched else "reads"
+                            )
+                        }
                     )
                 }
             )
 
     # Write results
-    MSIReport.write(
+    ReportIO.write(
         [MSISample(sample_name, locus_by_id)],
         args.output_results
     )

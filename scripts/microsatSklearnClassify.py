@@ -3,7 +3,7 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2018 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '2.4.0'
+__version__ = '2.5.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
@@ -12,7 +12,9 @@ import sys
 import json
 import logging
 import argparse
-from anacore.msi.base import LocusClassifier, MSIReport, Status
+from anacore.msi.base import Status
+from anacore.msi.locus import LocusClassifier, LocusRes
+from anacore.msi.reportIO import ReportIO
 from sklearn.tree import DecisionTreeClassifier as DecisionTree
 from sklearn.neighbors import KNeighborsClassifier as KNeighbors
 from sklearn.linear_model import LogisticRegression
@@ -32,7 +34,7 @@ class ClassifierParamsAction(argparse.Action):
         setattr(namespace, self.dest, json.loads(values))
 
 
-class MIAmSClassifier(LocusClassifier):
+class SklearnClassifier(LocusClassifier):
     def __init__(self, locus_id, method_name="MIAmS", model_method_name="model", clf="SVC", clf_params=None):
         if clf_params is None:
             clf_params = {}
@@ -66,22 +68,26 @@ def process(args):
     :param args: The namespace extracted from the script arguments.
     :type args: Namespace
     """
-    train_dataset = MSIReport.parse(args.input_model)
-    test_dataset = MSIReport.parse(args.input_evaluated)
+    train_dataset = ReportIO.parse(args.input_model)
+    test_dataset = ReportIO.parse(args.input_evaluated)
     # Classification by locus
     loci_ids = sorted(train_dataset[0].loci.keys())
     for locus_id in loci_ids:
         # Select the samples with a sufficient number of fragment to classify distribution
         evaluated_test_dataset = []
         for spl in test_dataset:
-            if spl.loci[locus_id].results[args.status_method].getCount() < args.min_depth:
-                spl.loci[locus_id].results[args.status_method].status = Status.undetermined
-                spl.loci[locus_id].results[args.status_method].score = None
-            else:
+            locus = spl.loci[locus_id]
+            locus_data = locus.results[args.data_method].data
+            if args.data_method != args.status_method:  # Data come from another method
+                locus_data = {"lengths": locus_data["lengths"]}
+            locus.results[args.status_method] = LocusRes(
+                Status.undetermined, None, locus_data
+            )
+            if locus_data["lengths"].getCount() >= args.min_depth:
                 evaluated_test_dataset.append(spl)
         # Classify
         if len(evaluated_test_dataset) != 0:
-            clf = MIAmSClassifier(locus_id, args.status_method, "model", args.classifier, args.classifier_params)
+            clf = SklearnClassifier(locus_id, args.status_method, "model", args.classifier, args.classifier_params)
             clf.fit(train_dataset)
             clf.set_status(evaluated_test_dataset)
     # Classification by sample
@@ -94,7 +100,7 @@ def process(args):
             spl.setStatusByInstabilityCount(args.status_method, args.min_voting_loci, args.instability_count)
         spl.setScore(args.status_method, args.undetermined_weight, args.locus_weight_is_score)
     # Write output
-    MSIReport.write(test_dataset, args.output_report)
+    ReportIO.write(test_dataset, args.output_report)
 
 
 ########################################################################
@@ -105,7 +111,7 @@ def process(args):
 if __name__ == "__main__":
     # Manage parameters
     parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using an sklearn classifer.')
-    parser.add_argument('--data-method', default="aln", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--data-method', help='The name of the method storing locus metrics and where the status will be set. [Default: classifier name]')
     parser.add_argument('--status-method', help='The name of the method storing locus metrics and where the status will be set. [Default: classifier name]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
@@ -133,6 +139,8 @@ if __name__ == "__main__":
     if args.consensus_method != "count" and args.instability_count != parser.get_default('instability_count'):
         raise Exception('The parameter "instability-count" can only used with consensus-ratio set to "count".')
     args.classifier_params["random_state"] = args.random_seed
+    if args.data_method is None:
+        args.data_method = args.classifier
     if args.status_method is None:
         args.status_method = args.classifier
 

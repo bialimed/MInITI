@@ -17,7 +17,6 @@ if os.getenv('PYTHONPATH') is None:
     os.environ['PYTHONPATH'] = lib_dir
 else:
     os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + os.pathsep + lib_dir
-os.environ['PATH'] = os.path.join(app_dir, "scripts") + os.pathsep + os.environ['PATH']
 ###################################################
 
 

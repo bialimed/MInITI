@@ -3,10 +3,8 @@ __copyright__ = 'Copyright (C) 2020 IUCT-O'
 __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
 
-    group_locus.add_argument('-p', '--peak-height-cutoff', default=0.05, type=float, help='Minimum height to consider a peak in size distribution as rate of the highest peak. [Default: %(default)s]')
-    group_locus.add_argument('-s', '--std-dev-rate', default=2.0, type=float, help='The locus is tagged as unstable if the number of peaks is upper than models_avg_nb_peaks + std_dev_rate * models_std_dev_nb_peaks. [Default: %(default)s]')
-    
-def microsatMSINGSClassify(
+
+def microsatMsingsClassify(
         in_evaluated="microsat/{sample}_microsatLenDistrib.json",
         in_model="microsat/microsatModel.json",
         out_report="microsat/{sample}_stabilityStatus.json",
@@ -25,7 +23,7 @@ def microsatMSINGSClassify(
         params_keep_output=False,
         params_stderr_append=False):
     """Predict stability classes and scores for loci and samples using mSINGS v4.0 like algorithm."""
-    rule microsatMSINGSClassify:
+    rule microsatMsingsClassify:
         input:
             evaluated = in_evaluated,
             model = in_model
@@ -34,7 +32,7 @@ def microsatMSINGSClassify(
         log:
             out_stderr
         params:
-            bin_path = "microsatMsingsClassify.py",
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatMsingsClassify.py")),
             consensus_method = "" if params_consensus_method is None else "--consensus-method {}".format(params_consensus_method),
             data_key = "" if params_data_key is None else "--data-key {}".format(params_data_key),
             instability_ratio = "" if params_instability_ratio is None or params_consensus_method == "count" else "--instability-ratio {}".format(params_instability_ratio),

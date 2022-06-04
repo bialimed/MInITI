@@ -33,7 +33,7 @@ def microsatSklearnClassify(
         log:
             out_stderr
         params:
-            bin_path = "microsatSklearnClassify.py",
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatSklearnClassify.py")),
             classifier = "" if params_classifier is None else "--classifier {}".format(params_classifier),
             classifier_params = "" if params_classifier_params is None else "--classifier-params {}".format(params_classifier_params),
             consensus_method = "" if params_consensus_method is None else "--consensus-method {}".format(params_consensus_method),

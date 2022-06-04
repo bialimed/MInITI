@@ -17,7 +17,6 @@ if os.getenv('PYTHONPATH') is None:
     os.environ['PYTHONPATH'] = lib_dir
 else:
     os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + os.pathsep + lib_dir
-os.environ['PATH'] = os.path.join(app_dir, "scripts") + os.pathsep + os.environ['PATH']
 ###################################################
 
 ########################################################################
@@ -31,7 +30,7 @@ def splFromPattern(pattern, excluded):
     for spl in samples_pathes:
         match = re.match("^" + pattern.replace("{sample}", "(.+)") + "$", spl)
         samples_names.add(match.groups(1)[0])
-    return samples_names - set(excluded)  
+    return samples_names - set(excluded)
 
 
 def getLogMessage(wf_name, msg, log_level="INFO"):
@@ -127,7 +126,7 @@ if aln_pattern is None:
 microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
-    params_method_name="aln"
+    params_method_name=config.get("classifier")["locus"]["sklearn"]
 )
 
 # Classify
@@ -142,7 +141,7 @@ microsatSklearnClassify(**{
     "params_classifier": cfg_cls_sklearn["classifier"],
     "params_classifier_params": cfg_cls_sklearn["classifier_params"],
     "params_consensus_method": consensus_method,
-    "params_data_key": "aln",
+    "params_data_key": cfg_cls_sklearn["classifier"],
     param_threshold: cfg_classifier["sample"]["instability_threshold"],
     "params_locus_weight_is_score": cfg_classifier["sample"]["locus_weight_is_score"],
     "params_min_depth": cfg_classifier["locus"]["min_support"],
@@ -156,7 +155,7 @@ microsatMsingsClassify(**{
     "in_evaluated": "microsat/{sample}_sklearnClassif.json",
     "in_model": cfg_classifier["model"],
     "params_consensus_method": consensus_method,
-    "params_data_key": "aln",
+    "params_data_key": cfg_cls_sklearn["classifier"],
     param_threshold: cfg_classifier["sample"]["instability_threshold"],
     "params_locus_weight_is_score": cfg_classifier["sample"]["locus_weight_is_score"],
     "params_min_depth": cfg_classifier["locus"]["min_support"],

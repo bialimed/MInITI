@@ -19,8 +19,7 @@ def wfReport(
     """Write samples and run reports."""
     # Copy web resources
     if in_resources_folder is None:
-        app_folder = os.path.dirname(workflow.snakefile)
-        in_resources_folder = os.path.join(app_folder, "report_resources")
+        in_resources_folder = os.path.abspath(os.path.join(workflow.basedir, "report_resources"))
     out_report_folder = os.path.dirname(out_spl_reports)
     out_resources_folder = os.path.join(out_report_folder, "resources")
     rule cpReportResources:
@@ -46,7 +45,7 @@ def wfReport(
         log:
             out_stderr_spl
         params:
-            bin_path = os.path.abspath(os.path.join(os.path.dirname(workflow.snakefile), "scripts/wfSplReport.py")),
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/wfSplReport.py")),
             data_method_name = "" if params_data_method_name is None else "--data-method-name {}".format(params_data_method_name),
             sample = " --sample-name {sample}"
         shell:
@@ -66,7 +65,7 @@ def wfReport(
         log:
             out_stderr_run
         params:
-            bin_path = os.path.abspath(os.path.join(os.path.dirname(workflow.snakefile), "scripts/wfRunReport.py")),
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/wfRunReport.py")),
             classification_method_name = "" if params_classification_method_name is None else "--classification-method-name {}".format(params_classification_method_name)
         shell:
             "{params.bin_path}"
