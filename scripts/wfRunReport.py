@@ -38,7 +38,9 @@ def getTemplate():
         <meta charset="UTF-8">
         <meta name="author" content="Escudie Frederic">
         <meta name="version" content="1.0.0">
-        <meta name="copyright" content="2020 IUCT-O">
+        <meta name="copyright" content="2020 CHU Toulouse">
+        <!-- uuid -->
+        <script type="text/javascript" charset="utf8" src="resources/uuid_8.3.2.min.js"></script>
         <!-- jQuery -->
         <script type="text/javascript" charset="utf8" src="resources/jquery_3.3.1.min.js"></script>
         <!-- DataTables -->
@@ -46,6 +48,8 @@ def getTemplate():
         <script type="text/javascript" charset="utf8" src="resources/pdfmake_0.1.36.min.js"></script>
         <script type="text/javascript" charset="utf8" src="resources/vfs_fonts_0.1.36.min.js"></script>
         <script type="text/javascript" charset="utf8" src="resources/datatables_1.10.18.min.js"></script>
+        <!-- Popper -->
+        <script type="text/javascript" charset="utf8" src="resources/popper_1.16.1.min.js"></script>
         <!-- Bootstrap -->
         <link type="text/css" charset="utf8" rel="stylesheet" href="resources/bootstrap-4.3.1-dist/css/bootstrap.min.css">
         <script type="text/javascript" charset="utf8" src="resources/bootstrap-4.3.1-dist/js/bootstrap.min.js"></script>
@@ -161,7 +165,6 @@ if __name__ == "__main__":
     samples = []
     for curr_report in args.inputs_report:
         msi_spl = ReportIO.parse(curr_report)[0]
-        print(msi_spl.name, msi_spl.getNbUnstable(args.classification_method_name), msi_spl.getNbDetermined(args.classification_method_name))
         samples.append({
             "Name": msi_spl.name,
             "Rate": None if msi_spl.getNbDetermined(args.classification_method_name) == 0 else msi_spl.getNbUnstable(args.classification_method_name) / msi_spl.getNbDetermined(args.classification_method_name),
