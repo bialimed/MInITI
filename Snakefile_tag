@@ -126,7 +126,7 @@ if aln_pattern is None:
 microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
-    params_method_name=config.get("classifier")["locus"]["sklearn"]
+    params_method_name=config.get("classifier")["locus"]["sklearn"]["classifier"]
 )
 
 # Classify
@@ -141,7 +141,7 @@ microsatSklearnClassify(**{
     "params_classifier": cfg_cls_sklearn["classifier"],
     "params_classifier_params": cfg_cls_sklearn["classifier_params"],
     "params_consensus_method": consensus_method,
-    "params_data_key": cfg_cls_sklearn["classifier"],
+    "params_data_method": cfg_cls_sklearn["classifier"],
     param_threshold: cfg_classifier["sample"]["instability_threshold"],
     "params_locus_weight_is_score": cfg_classifier["sample"]["locus_weight_is_score"],
     "params_min_depth": cfg_classifier["locus"]["min_support"],
@@ -155,14 +155,15 @@ microsatMsingsClassify(**{
     "in_evaluated": "microsat/{sample}_sklearnClassif.json",
     "in_model": cfg_classifier["model"],
     "params_consensus_method": consensus_method,
-    "params_data_key": cfg_cls_sklearn["classifier"],
+    "params_data_method": cfg_cls_sklearn["classifier"],
     param_threshold: cfg_classifier["sample"]["instability_threshold"],
     "params_locus_weight_is_score": cfg_classifier["sample"]["locus_weight_is_score"],
     "params_min_depth": cfg_classifier["locus"]["min_support"],
     "params_min_voting_loci": cfg_classifier["sample"]["min_voting_loci"],
     "params_peak_height_cutoff": cfg_cls_msings["peak_height_cutoff"],
     "params_std_dev_rate": cfg_cls_msings["std_dev_rate"],
-    "params_undetermined_weight": cfg_classifier["sample"]["undetermined_weight"]
+    "params_undetermined_weight": cfg_classifier["sample"]["undetermined_weight"],
+    "params_keep_output": True
 })
 
 # Analysis report
@@ -170,6 +171,6 @@ wfReport(
     config.get("classifier")["model"],
     samples_names,
     in_classification="microsat/{sample}_stabilityStatus.json",
-    params_classification_method_name=config.get("classifier")["locus"]["classifier"],
-    params_data_method_name=config.get("classifier")["locus"]["classifier"]
+    params_classification_method_name=cfg_cls_sklearn["classifier"],
+    params_data_method_name=cfg_cls_sklearn["classifier"]
 )

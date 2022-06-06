@@ -12,7 +12,8 @@ import sys
 import json
 import logging
 import argparse
-from anacore.msi.base import MSIReport, Status
+from anacore.msi.base import Status
+from anacore.msi.reportIO import ReportIO
 
 
 ########################################################################
@@ -32,7 +33,7 @@ def getHigherPeakByLocus(models, min_support_reads=0):
     :rtype: dict
     """
     higher_by_locus = {}
-    models_samples = MSIReport.parse(models)
+    models_samples = ReportIO.parse(models)
     for curr_spl in models_samples:
         for locus_id, curr_locus in curr_spl.loci.items():
             if locus_id not in higher_by_locus:

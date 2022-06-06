@@ -12,7 +12,7 @@ import sys
 import json
 import logging
 import argparse
-from anacore.msi.base import MSIReport
+from anacore.msi.reportIO import ReportIO
 
 
 ########################################################################
@@ -160,7 +160,7 @@ if __name__ == "__main__":
     report_content = report_content.replace("##class_by_score##", json.dumps(args.class_by_score))
     samples = []
     for curr_report in args.inputs_report:
-        msi_spl = MSIReport.parse(curr_report)[0]
+        msi_spl = ReportIO.parse(curr_report)[0]
         print(msi_spl.name, msi_spl.getNbUnstable(args.classification_method_name), msi_spl.getNbDetermined(args.classification_method_name))
         samples.append({
             "Name": msi_spl.name,

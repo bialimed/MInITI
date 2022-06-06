@@ -12,14 +12,14 @@ def microsatSklearnClassify(
         params_classifier=None,
         params_classifier_params=None,
         params_consensus_method="ratio",
-        params_data_key=None,
+        params_data_method=None,
         params_instability_ratio=None,
         params_instability_count=None,
         params_locus_weight_is_score=False,
         params_min_depth=None,
         params_min_voting_loci=None,
         params_random_seed=None,
-        params_status_key=None,
+        params_status_method=None,
         params_undetermined_weight=None,
         params_keep_output=False,
         params_stderr_append=False):
@@ -37,14 +37,14 @@ def microsatSklearnClassify(
             classifier = "" if params_classifier is None else "--classifier {}".format(params_classifier),
             classifier_params = "" if params_classifier_params is None else "--classifier-params {}".format(params_classifier_params),
             consensus_method = "" if params_consensus_method is None else "--consensus-method {}".format(params_consensus_method),
-            data_key = "" if params_data_key is None else "--data-key {}".format(params_data_key),
+            data_method = "" if params_data_key is None else "--data-method {}".format(params_data_method),
             instability_ratio = "" if params_instability_ratio is None or params_consensus_method == "count" else "--instability-ratio {}".format(params_instability_ratio),
             instability_count = "" if params_instability_count is None or params_consensus_method == "ratio" else "--instability-ratio {}".format(params_instability_count),
             locus_weight_is_score = "" if params_locus_weight_is_score is None else "--locus-weight-is-score",
-            min_depth = "" if params_min_depth is None else "--min-support {}".format(params_min_depth),
+            min_depth = "" if params_min_depth is None else "--min-depth {}".format(params_min_depth),
             min_voting_loci = "" if params_min_voting_loci is None else "--min-voting-loci {}".format(params_min_voting_loci),
             random_seed = "" if params_random_seed is None else "--random-seed {}".format(params_random_seed),
-            status_key = "" if params_status_key is None else "--status-key {}".format(params_status_key),
+            status_method = "" if params_status_method is None else "--status-method {}".format(params_status_method),
             stderr_redirection = "2>" if not params_stderr_append else "2>>",
             undetermined_weight = "" if params_undetermined_weight is None else "--undetermined-weight {}".format(params_undetermined_weight),
         conda:
@@ -54,13 +54,13 @@ def microsatSklearnClassify(
             " {params.classifier}"
             " {params.classifier_params}"
             " {params.consensus_method}"
-            " {params.data_key}"
+            " {params.data_method}"
             " {params.instability_ratio}"
             " {params.instability_count}"
             " {params.locus_weight_is_score}"
             " {params.min_depth}"
             " {params.random_seed}"
-            " {params.status_key}"
+            " {params.status_method}"
             " {params.undetermined_weight}"
             " --input-evaluated {input.evaluated}"
             " --input-model {input.model}"

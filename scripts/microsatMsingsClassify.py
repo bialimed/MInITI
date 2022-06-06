@@ -35,12 +35,12 @@ def getHighestPeak(distrib):
 def getModelBaseline(locus_models, peak_height_cutoff=0.05):
     models_nb_peaks = list()
     for curr_ref in locus_models:
-        if curr_ref.results["model"].status == Status.stable:
+        if "model" in curr_ref.results and curr_ref.results["model"].status == Status.stable:
             models_nb_peaks.append(
                 getMSINGSNbPeaks(curr_ref.results["model"].data["lengths"], peak_height_cutoff)
             )
     return {
-        "average": average(models_nb_peaks),
+        "avg": average(models_nb_peaks),
         "count": len(models_nb_peaks),
         "std_dev": std(models_nb_peaks)
     }
@@ -67,23 +67,23 @@ def getScore(nb_peaks, models_peaks):
 def getStatus(nb_peaks, models_peaks, std_dev_rate):
     nb_peaks_threshold = models_peaks["avg"] + models_peaks["std_dev"] * std_dev_rate
     if nb_peaks >= nb_peaks_threshold:
-        status = Status.instable
+        status = Status.unstable
     else:
         status = Status.stable
     return status
 
 
 def process(args):
-    msi_evaluated = ReportIO.parse(args.input_evaluated)
+    eval_list = ReportIO.parse(args.input_evaluated)
     # Classify loci
-    msi_models = ReportIO.parse(args.input_model)
+    models = ReportIO.parse(args.input_model)
     model_baseline = dict()
-    for msi_spl in msi_evaluated:
-        for locus in msi_spl:
+    for curr_spl in eval_list:
+        for locus_id, locus in curr_spl.loci.items():
             # Model
             if locus.position not in model_baseline:
                 model_baseline[locus.position] = getModelBaseline(
-                    [curr_model.loci[locus.position] for curr_model in msi_models if locus.position in curr_model.loci],
+                    [curr_model.loci[locus.position] for curr_model in models if locus.position in curr_model.loci],
                     args.peak_height_cutoff
                 )
             models_peaks = model_baseline[locus.position]
@@ -99,14 +99,14 @@ def process(args):
             locus.results[args.status_method] = locus_res
         # Classify sample
         if args.consensus_method == "majority":
-            msi_spl.setStatusByMajority(args.status_method, args.min_voting_loci)
+            curr_spl.setStatusByMajority(args.status_method, args.min_voting_loci)
         elif args.consensus_method == "ratio":
-            msi_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
+            curr_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
         elif args.consensus_method == "count":
-            msi_spl.setStatusByInstabilityCount(args.status_method, args.min_voting_loci, args.instability_count)
-        msi_evaluated.setScore(args.status_method, args.undetermined_weight, args.locus_weight_is_score)
+            curr_spl.setStatusByInstabilityCount(args.status_method, args.min_voting_loci, args.instability_count)
+        curr_spl.setScore(args.status_method, args.undetermined_weight, args.locus_weight_is_score)
     # Write output
-    ReportIO.write(msi_evaluated, args.output_report)
+    ReportIO.write(eval_list, args.output_report)
 
 
 ########################################################################
@@ -116,8 +116,8 @@ def process(args):
 ########################################################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using mSINGS v4.0 like algorithm.')
-    parser.add_argument('-d', '--data-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
-    parser.add_argument('-s', '--status-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--data-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--status-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
     group_locus.add_argument('-m', '--min-depth', default=150, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')

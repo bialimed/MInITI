@@ -12,8 +12,8 @@ import sys
 import json
 import logging
 import argparse
-from anacore.msi.base import Status
-from anacore.msi.locus import LocusClassifier, LocusRes
+from anacore.msi.base import LocusClassifier, Status
+from anacore.msi.locus import LocusRes
 from anacore.msi.reportIO import ReportIO
 from sklearn.tree import DecisionTreeClassifier as DecisionTree
 from sklearn.neighbors import KNeighborsClassifier as KNeighbors
