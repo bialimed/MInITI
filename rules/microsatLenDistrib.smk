@@ -1,7 +1,7 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2020 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '1.0.0'
+__version__ = '1.1.0'
 
 
 def microsatLenDistrib(
@@ -13,6 +13,7 @@ def microsatLenDistrib(
         params_padding=None,
         params_reads_stitched=False,
         params_sample_name="{sample}",
+        params_stitch_count=False,
         params_keep_output=False,
         params_stderr_append=False):
     """Retrieves the reads length distribution for loci."""
@@ -30,7 +31,8 @@ def microsatLenDistrib(
             padding = "" if params_padding is None else "--padding {}".format(params_padding),
             reads_stitched = "--reads-stitched" if params_reads_stitched is True else "",
             sample_name = "" if params_sample_name is None else "--sample-name {}".format(params_sample_name),
-            stderr_redirection = "2>" if not params_stderr_append else "2>>"
+            stderr_redirection = "2>" if not params_stderr_append else "2>>",
+            stitch_count = "--stitch-count" if params_stitch_count else ""
         conda:
             "envs/anacore-utils.yml"
         shell:
@@ -39,6 +41,7 @@ def microsatLenDistrib(
             " {params.padding}"
             " {params.reads_stitched}"
             " {params.sample_name}"
+            " {params.stitch_count}"
             " --input-alignments {input.alignments}"
             " --input-microsatellites {input.microsatellites}"
             " --output-results {output}"

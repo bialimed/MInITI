@@ -1,5 +1,6 @@
 classifier:
   locus:
+    stitch_count: False
     sklearn:
       classifier: SVC
       classifier_params:
@@ -11,9 +12,9 @@ classifier:
   random_seed: 0
   sample:
     consensus_method: ratio
-    instability_threshold: 0.3
+    instability_threshold: 0.33
     locus_weight_is_score: false
-    min_voting_loci: 3
+    min_voting_loci: 4
     undetermined_weight: 0
 input:
   R1_pattern:   # raw/{sample}_R1.fastq.gz
