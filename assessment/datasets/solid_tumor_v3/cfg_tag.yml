@@ -18,7 +18,7 @@ classifier:
 input:
   R1_pattern:
   R2_pattern:
-  aln_pattern: aln/{sample}.bam
+  aln_pattern: raw/{sample}.bam
   excluded_samples: [Undetermined]
 reference:
   microsatellites: targets.bed

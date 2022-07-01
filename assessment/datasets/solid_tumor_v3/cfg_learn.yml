@@ -1,8 +1,8 @@
 filters:
-  min_support: 150
+  min_support: ##MIN_SUPPORT##
 input:
-  R1_pattern: # raw/{sample}_R1.fastq.gz
-  R2_pattern: # raw/{sample}_R2.fastq.gz
+  R1_pattern:
+  R2_pattern:
   aln_pattern: raw/{sample}.bam
   excluded_samples: [Undetermined]
   known_status: status.tsv

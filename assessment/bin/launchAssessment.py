@@ -7,10 +7,10 @@ __version__ = '2.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-import argparse
 from anacore.bed import getAreas
 from anacore.msi.reportIO import ReportIO
 from anacore.sv import HashedSVIO
+import argparse
 import hashlib
 from itertools import product
 import logging
@@ -77,31 +77,64 @@ def getStatus(in_annotations, samples):
             spl_name = getSplFromLibName(record["sample"])
             if spl_name in samples:
                 status_by_spl[spl_name] = {key: value for key, value in record.items() if key not in ["sample", "sample_status"]}
-                status_by_spl[spl_name]["sample"] = record["sample_status"]
+                status_by_spl[spl_name]["sample"] = record["status"]
     for spl in samples:
         if spl not in status_by_spl:
             raise Exception("Sample {} has no expected data.".format(spl))
     return status_by_spl
 
 
-def train(config, tag_out_folder):
+def train(libraries, out_folder, cfg_tpl_path, min_support_reads):
+    os.makedirs(out_folder)
+    # Create config
+    cfg_path = os.path.join(out_folder, "config.yml")
+    with open(cfg_tpl_path) as reader:
+        with open(cfg_path, "w") as writer:
+            for line in reader:
+                line = line.replace("##MIN_SUPPORT##", min_support_reads)
+                writer.write()
+    # Create raw
+    raw_folder = os.path.join(out_folder, "raw")
+    os.makedirs(raw_folder)
+    for lib in libraries:
+        os.symlink(lib["path"], os.path.join(raw_folder, lib["name"] + ".bam"))
+        os.symlink(lib["path"][:-4] + ".bai", os.path.join(raw_folder, lib["name"] + ".bai"))
+    # Command
     bin_dir = os.path.dirname(os.path.abspath(__file__))
     cmd = [
         os.path.join(bin_dir, "launch_snk.sh"),
         "Snakefile_learn",
-        config,
-        tag_out_folder
+        cfg_path,
+        out_folder
     ]
     subprocess.check_call(cmd)
 
 
-def predict(config, tag_out_folder):
+def predict(libraries, out_folder, cfg_tpl_path, model_path, clf, min_support_reads):
+    os.makedirs(out_folder)
+    # Create config
+    cfg_path = os.path.join(out_folder, "config.yml")
+    with open(cfg_tpl_path) as reader:
+        with open(cfg_path, "w") as writer:
+            for line in reader:
+                line = line.replace("##CLASSIFIER##", clf["class"])
+                line = line.replace("##CLASSIFIER_PARAMS##", clf["params"])
+                line = line.replace("##MIN_SUPPORT##", min_support_reads)
+                line = line.replace("##MODEL_PATH##", model_path)
+                writer.write()
+    # Create raw
+    raw_folder = os.path.join(out_folder, "raw")
+    os.makedirs(raw_folder)
+    for lib in libraries:
+        os.symlink(lib["path"], os.path.join(raw_folder, lib["name"] + ".bam"))
+        os.symlink(lib["path"][:-4] + ".bai", os.path.join(raw_folder, lib["name"] + ".bai"))
+    # Command
     bin_dir = os.path.dirname(os.path.abspath(__file__))
     cmd = [
         os.path.join(bin_dir, "launch_snk.sh"),
         "Snakefile_tag",
-        config,
-        tag_out_folder
+        cfg_path,
+        out_folder
     ]
     subprocess.check_call(cmd)
 
@@ -290,6 +323,23 @@ def getMSISamples(in_folder, samples):
     return samples_res
 
 
+class ClfAction(argparse.Action):
+    """Manage classifiers parameter to convert in list of dict."""
+    def __call__(self, parser, namespace, values, option_string=None):
+        new_val = []
+        for curr_val in values:
+            struct_val = {
+                "name": curr_val,
+                "class": curr_val,
+                "params": ""
+            }
+            if curr_val.startswith("RandomForest:"):
+                struct_val["class"] = "RandomForest"
+                n_estimators = curr_val.split(":")[1]
+                struct_val["params"] = '{"n_estimators": ' + n_estimators + '}'
+        setattr(namespace, self.dest, new_val)
+
+
 ########################################################################
 #
 # MAIN
@@ -301,11 +351,11 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--start-dataset-id', type=int, default=0, help="This option allow you to skip the n first test. [Default: %(default)s]")
     parser.add_argument('-n', '--nb-tests', type=int, default=100, help="The number of couple of test and train datasets created from the original dataset. [Default: %(default)s]")
     parser.add_argument('-a', '--test-ratio', type=float, default=0.4, help="The sample ratio for testing versus samples for learning. [Default: %(default)s]")
-    parser.add_argument('-c', '--classifiers', default=["SVM"], nargs='+', help="The additional sklearn classifiers evaluates on MIAmS pairs combination results (example: DecisionTree, KNeighbors, LogisticRegression, RandomForest, RandomForest:n).")
+    parser.add_argument('-c', '--classifiers', default=["SVM", "RandomForest:10", "RandomForest:50"], nargs='+', action=ClfAction, help="The additional sklearn classifiers evaluates on MIAmS pairs combination results (example: DecisionTree, KNeighbors, LogisticRegression, RandomForest, RandomForest:n).")
     parser.add_argument('-v', '--version', action='version', version=__version__)
     # Loci classification
     group_loci = parser.add_argument_group('Loci classification')
-    group_loci.add_argument('-t', '--tag-min-support-reads', default=[80], nargs='+', type=int, help='The minimum numbers of reads for determine the status. [Default: %(default)s]')
+    group_loci.add_argument('-t', '--tag-min-support-reads', default=[50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170], nargs='+', type=int, help='The minimum numbers of reads for determine the status. [Default: %(default)s]')
     group_loci.add_argument('-e', '--learn-min-support-reads', default=200, type=int, help='The minimum numbers of reads for use loci in learning step. [Default: %(default)s]')
     # Sample classification
     group_spl = parser.add_argument_group('Sample classification')
@@ -328,11 +378,11 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Parameters
-    annotation_path = os.path.join(args.data_folder, "status.tsv")
     aln_folder = os.path.join(args.data_folder, "aln")
+    annotation_path = os.path.join(args.data_folder, "status.tsv")
     targets_path = os.path.join(args.data_folder, "targets.bed")
-    cfg_tag_tpl_path = os.path.join(args.data_folder, "cfg_tag.yml")
-    cfg_learn_tpl_path = os.path.join(args.data_folder, "cfg_learn.yml")
+    test_cfg_tpl_path = os.path.join(args.data_folder, "cfg_tag.yml")
+    train_cfg_tpl_path = os.path.join(args.data_folder, "cfg_learn.yml")
     if not os.path.exists(args.work_folder):
         os.makedirs(args.work_folder)
 
@@ -362,22 +412,22 @@ if __name__ == "__main__":
             log.info("Skip already processed dataset {}/{} ({}).".format(dataset_id, args.nb_tests - 1, dataset_md5))
         else:
             log.info("Start processing dataset {}/{} ({}).".format(dataset_id, args.nb_tests - 1, dataset_md5))
-            # Temp file
-            learn_out_folder = os.path.join(args.work_folder, "learn_out_dataset-{}".format(dataset_id))
-            models_path = os.path.join(learn_out_folder, "microsat", "microsatModel.json")
-            tag_out_folder = os.path.join(args.work_folder, "tag_out_dataset-{}".format(dataset_id))
-            # Create dataset
-            train_names = {spl_name for idx, spl_name in enumerate(ordered_spl_names) if idx in train_idx}
-            test_names = {spl_name for idx, spl_name in enumerate(ordered_spl_names) if idx in test_idx}
-            train_samples = [lib for lib in librairies if lib["name"] in train_names]  # Select all libraries corresponding to the train samples
-            test_samples = [lib for lib in librairies if lib["name"] in test_names]  # Select all libraries corresponding to the test samples
+            # File mode
             use_header = False
             out_mode = "a"
             if dataset_id == 0:
                 use_header = True
                 out_mode = "w"
+            # Temp file
+            train_out_folder = os.path.join(args.work_folder, "learn_out_dataset-{}".format(dataset_id))
+            test_out_folder = os.path.join(args.work_folder, "tag_out_dataset-{}".format(dataset_id))
+            # Create dataset
+            train_names = {spl_name for idx, spl_name in enumerate(ordered_spl_names) if idx in train_idx}
+            test_names = {spl_name for idx, spl_name in enumerate(ordered_spl_names) if idx in test_idx}
+            train_samples = [lib for lib in librairies if lib["name"] in train_names]  # Select all libraries corresponding to the train samples
+            test_samples = [lib for lib in librairies if lib["name"] in test_names]  # Select all libraries corresponding to the test samples
             # Train
-            train(args.cfg_learn_tpl_path, learn_out_folder)
+            train(train_samples, train_out_folder, train_cfg_tpl_path, args.learn_min_support_reads)
             datasets_df_rows = [
                 getDatasetsInfo(
                     dataset_id,
@@ -391,31 +441,14 @@ if __name__ == "__main__":
             datasets_df = pd.DataFrame.from_records(datasets_df_rows, columns=getDatasetsInfoTitles(loci_id_by_name))
             with open(args.datasets_path, out_mode) as FH_out:
                 datasets_df.to_csv(FH_out, header=use_header, sep='\t')
-            # Fit
-            for clfier_idx, (clf_name, min_support) in enumerate(product(args.classifiers, args.tag_min_support_reads)):
-                cfg_path = os.path.join(tag_out_folder, "config.yml")
-                clf = clf_name
-                clf_params = ""
-                if clf_name.startswith("RandomForest:"):
-                    n_estimators = clf_name.split(":")[1]
-                    clf = "RandomForest"
-                    clf_params = '{"n_estimators": ' + n_estimators + '}'
-                # write config
-                os.makedirs(tag_out_folder)
-                with open(cfg_tag_tpl_path) as reader:
-                    with open(cfg_path, "w") as writer:
-                        for line in reader:
-                            line = line.replace("##CLASSIFIER##", clf)
-                            line = line.replace("##CLASSIFIER_PARAMS##", clf_params)
-                            line = line.replace("##MIN_SUPPORT##", min_support)
-                            line = line.replace("##MODEL_PATH##", models_path)
-                            writer.write()
-                # Predict
-                predict(cfg_path, learn_out_folder)
-                reports = getMSISamples(tag_out_folder, test_samples)
+            # Predict
+            for clfier_idx, (clf, min_support) in enumerate(product(args.classifiers, args.tag_min_support_reads)):
+                model_path = os.path.join(train_out_folder, "microsat", "microsatModel.json")
+                predict(test_samples, test_out_folder, train_cfg_tpl_path, model_path, clf, min_support)
+                reports = getMSISamples(test_out_folder, test_samples)
                 res_df_rows = getMethodResInfo(
                     dataset_id,
-                    "classifier={}, min_support={}".format(clf_name, min_support),
+                    "classifier={}, min_support={}".format(clf["name"], min_support),
                     loci_id_by_name,
                     reports,
                     status_by_spl,
@@ -435,8 +468,8 @@ if __name__ == "__main__":
                     res_df.to_csv(FH_out, header=use_header, sep='\t')
                 use_header = True
                 out_mode = "w"
-                shutil.rmtree(tag_out_folder)
-            shutil.rmtree(learn_out_folder)
+                shutil.rmtree(test_out_folder)
+            shutil.rmtree(train_out_folder)
         # Next dataset
         dataset_id += 1
     log.info("End of job")
