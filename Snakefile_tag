@@ -164,7 +164,7 @@ microsatMsingsClassify(**{
     "params_peak_height_cutoff": cfg_cls_msings["peak_height_cutoff"],
     "params_std_dev_rate": cfg_cls_msings["std_dev_rate"],
     "params_undetermined_weight": cfg_classifier["sample"]["undetermined_weight"],
-    "params_keep_output": True
+    "params_keep_outputs": True
 })
 
 # Analysis report

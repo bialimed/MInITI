@@ -21,7 +21,7 @@ def microsatSklearnClassify(
         params_random_seed=None,
         params_status_method=None,
         params_undetermined_weight=None,
-        params_keep_output=False,
+        params_keep_outputs=False,
         params_stderr_append=False):
     """Predict stability classes and scores for loci and samples using an sklearn classifer."""
     rule microsatSklearnClassify:
@@ -29,7 +29,7 @@ def microsatSklearnClassify(
             evaluated = in_evaluated,
             model = in_model
         output:
-            out_report if params_keep_output else temp(out_report)
+            out_report if params_keep_outputs else temp(out_report)
         log:
             out_stderr
         params:

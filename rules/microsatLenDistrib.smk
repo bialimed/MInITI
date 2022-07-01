@@ -14,7 +14,7 @@ def microsatLenDistrib(
         params_reads_stitched=False,
         params_sample_name="{sample}",
         params_stitch_count=False,
-        params_keep_output=False,
+        params_keep_outputs=False,
         params_stderr_append=False):
     """Retrieves the reads length distribution for loci."""
     rule microsatLenDistrib:
@@ -22,7 +22,7 @@ def microsatLenDistrib(
             alignments = in_alignments,
             microsatellites = in_microsatellites
         output:
-            out_results if params_keep_output else temp(out_results)
+            out_results if params_keep_outputs else temp(out_results)
         log:
             out_stderr
         params:

@@ -132,7 +132,7 @@ microsatCreateModel(
     in_length_distributions=expand("microsat/{sample}_microsatLenDistrib.json", sample=samples_names),
     out_model="microsat/microsatModel.json",
     params_min_support=config.get("filters")["min_support"],
-    params_keep_output=True
+    params_keep_outputs=True
 )
 
 # Analysis report

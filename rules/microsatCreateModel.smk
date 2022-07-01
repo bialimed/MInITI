@@ -12,7 +12,7 @@ def microsatCreateModel(
         out_model="microsat/microsatModel.json",
         out_stderr="logs/microsatCreateModel_stderr.txt",
         params_min_support=None,
-        params_keep_output=False,
+        params_keep_outputs=False,
         params_stderr_append=False):
     """Create training data for MSI classifiers."""
     rule microsatCreateModel:
@@ -21,8 +21,8 @@ def microsatCreateModel(
             microsatellites = in_microsatellites,
             length_distributions = in_length_distributions,
         output:
-            info = out_info if params_keep_output else temp(out_info),
-            model = out_model if params_keep_output else temp(out_model)
+            info = out_info if params_keep_outputs else temp(out_info),
+            model = out_model if params_keep_outputs else temp(out_model)
         log:
             out_stderr
         params:

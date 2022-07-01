@@ -10,7 +10,7 @@ def microsatStatusToAnnot(
         out_loci_status="microsat/modelStatus.tsv",
         out_stderr="logs/microsatLenDistrib_stderr.txt",
         params_locus_id=True,
-        params_keep_output=False,
+        params_keep_outputs=False,
         params_stderr_append=False):
     """Convert MSI status file (splA<tab>status_locus_1<tab>status_locus_2) in MSI annotation file."""
     rule microsatStatusToAnnot:
@@ -18,7 +18,7 @@ def microsatStatusToAnnot(
             loci_status = in_loci_status,
             microsatellites = in_microsatellites
         output:
-            out_loci_status if params_keep_output else temp(out_loci_status)
+            out_loci_status if params_keep_outputs else temp(out_loci_status)
         log:
             out_stderr
         params:
