@@ -3,7 +3,7 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2018 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '1.2.0'
+__version__ = '1.2.1'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
@@ -54,7 +54,7 @@ def writeStatusMetrics(msi_samples, result_id, out_summary):
     """
     status_by_locus = dict()
     locus_name_by_id = dict()
-    authorized_status = Status.authorizedValues()
+    authorized_status = sorted(Status.authorizedValues() - {Status.undetermined, Status.none})  # Removed pruned status
     # Get number of samples by status for each locus
     for spl in msi_samples:
         for locus_id, locus in spl.loci.items():
@@ -65,19 +65,22 @@ def writeStatusMetrics(msi_samples, result_id, out_summary):
                 status = locus.results[result_id].status
                 status_by_locus[locus_id][status] += 1
     # Write results
+    nb_spl = len(msi_samples)
+    report_status = authorized_status + ["Unused"]
     with open(out_summary, "w") as FH_out:
-        FH_out.write("Nb retained samples: {}\n".format(len(msi_samples)))
+        FH_out.write("Nb retained samples: {}\n".format(nb_spl))
         print(
-            "Locus_position", "Locus_name", "\t".join([str(status) for status in authorized_status]),
+            "Locus_position", "Locus_name", "\t".join([str(status) for status in report_status]),
             sep="\t",
             file=FH_out
         )
         for locus_id, locus_name in locus_name_by_id.items():
+            status_by_locus[locus_id]["Unused"] = nb_spl - sum(status_by_locus[locus_id].values())
             print(
                 locus_id,
                 locus_name,
                 "\t".join(
-                    [str(status_by_locus[locus_id][status]) for status in authorized_status]
+                    [str(status_by_locus[locus_id][status]) for status in report_status]
                 ),
                 sep="\t",
                 file=FH_out
