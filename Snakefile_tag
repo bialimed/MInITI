@@ -88,7 +88,7 @@ onerror:
 #
 ########################################################################
 samples_names = None
-aln_pattern = config.get("input").get("alignment_pattern")
+aln_pattern = config.get("input").get("aln_pattern")
 if aln_pattern is not None:
     samples_names = splFromPattern(aln_pattern, config.get("input")["excluded_samples"])
 else:

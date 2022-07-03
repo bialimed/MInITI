@@ -20,5 +20,5 @@ snakemake \
 --snakefile ${application_dir}/$wf \
 --configfile $config \
 --directory $out \
-> wf_log.txt \
-2> wf_stderr.txt
+> $out/wf_log.txt \
+2> $out/wf_stderr.txt

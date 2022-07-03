@@ -1,13 +1,13 @@
 classifier:
   locus:
-    stitch_count: False
-    sklearn:
-      classifier: SVC
-      classifier_params:
+    min_support: 100
     msings:
       peak_height_cutoff: 0.05
       std_dev_rate: 2.0
-    min_support: 100
+    sklearn:
+      classifier: SVC
+      classifier_params:
+    stitch_count: false
   model:  # learn/microsat/microsatModel.json
   random_seed: 0
   sample:
@@ -17,10 +17,10 @@ classifier:
     min_voting_loci: 4
     undetermined_weight: 0
 input:
-  R1_pattern:   # raw/{sample}_R1.fastq.gz
-  R2_pattern:   # raw/{sample}_R2.fastq.gz
   aln_pattern:  # aln/{sample}.bam
   excluded_samples: [Undetermined]
+  R1_pattern:   # raw/{sample}_R1.fastq.gz
+  R2_pattern:   # raw/{sample}_R2.fastq.gz
 reference:
   microsatellites:   # design/microsatellites.bed
   sequences:    # genome/hg38.fa

@@ -1,12 +1,13 @@
 classifier:
   locus:
-    sklearn:
-      classifier: ##CLASSIFIER##
-      classifier_params: ##CLASSIFIER_PARAMS##
+    min_support: ##MIN_SUPPORT##
     msings:
       peak_height_cutoff: 0.05
       std_dev_rate: 2.0
-    min_support: ##MIN_SUPPORT##
+    sklearn:
+      classifier: ##CLASSIFIER##
+      classifier_params: ##CLASSIFIER_PARAMS##
+    stitch_count: false
   model: ##MODEL_PATH##
   random_seed: 0
   sample:
@@ -16,10 +17,10 @@ classifier:
     min_voting_loci: 4
     undetermined_weight: 0
 input:
-  R1_pattern:
-  R2_pattern:
   aln_pattern: raw/{sample}.bam
   excluded_samples: [Undetermined]
+  R1_pattern:
+  R2_pattern:
 reference:
   microsatellites: targets.bed
   sequences: /Anapath/bank/Homo_sapiens/DNA/GRCh38_Ensembl101/sequences/Homo_sapiens.GRCh38.ensembl_v101.dna.toplevel.chrOnly.fa

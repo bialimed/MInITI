@@ -54,7 +54,7 @@ def getLibFromDataFolder(aln_folder):
             filepath = os.path.join(aln_folder, filename)
             libraries.append({
                 "name": filename.split(".")[0],
-                "path": filepath
+                "path": os.path.abspath(filepath)
             })
     return libraries
 
@@ -84,21 +84,24 @@ def getStatus(in_annotations, samples):
     return status_by_spl
 
 
-def train(libraries, out_folder, cfg_tpl_path, min_support_reads):
+def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_support_reads, log):
     os.makedirs(out_folder)
     # Create config
     cfg_path = os.path.join(out_folder, "config.yml")
     with open(cfg_tpl_path) as reader:
         with open(cfg_path, "w") as writer:
             for line in reader:
-                line = line.replace("##MIN_SUPPORT##", min_support_reads)
-                writer.write()
+                line = line.replace("##MIN_SUPPORT##", str(min_support_reads))
+                writer.write(line)
     # Create raw
     raw_folder = os.path.join(out_folder, "raw")
     os.makedirs(raw_folder)
     for lib in libraries:
         os.symlink(lib["path"], os.path.join(raw_folder, lib["name"] + ".bam"))
         os.symlink(lib["path"][:-4] + ".bai", os.path.join(raw_folder, lib["name"] + ".bai"))
+    # Design
+    os.symlink(status_path, os.path.join(out_folder, "status.tsv"))
+    os.symlink(targets_path, os.path.join(out_folder, "targets.bed"))
     # Command
     bin_dir = os.path.dirname(os.path.abspath(__file__))
     cmd = [
@@ -107,10 +110,11 @@ def train(libraries, out_folder, cfg_tpl_path, min_support_reads):
         cfg_path,
         out_folder
     ]
+    log.debug("submit: ".join(cmd))
     subprocess.check_call(cmd)
 
 
-def predict(libraries, out_folder, cfg_tpl_path, model_path, clf, min_support_reads):
+def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, min_support_reads, log):
     os.makedirs(out_folder)
     # Create config
     cfg_path = os.path.join(out_folder, "config.yml")
@@ -119,15 +123,17 @@ def predict(libraries, out_folder, cfg_tpl_path, model_path, clf, min_support_re
             for line in reader:
                 line = line.replace("##CLASSIFIER##", clf["class"])
                 line = line.replace("##CLASSIFIER_PARAMS##", clf["params"])
-                line = line.replace("##MIN_SUPPORT##", min_support_reads)
+                line = line.replace("##MIN_SUPPORT##", str(min_support_reads))
                 line = line.replace("##MODEL_PATH##", model_path)
-                writer.write()
+                writer.write(line)
     # Create raw
     raw_folder = os.path.join(out_folder, "raw")
     os.makedirs(raw_folder)
     for lib in libraries:
         os.symlink(lib["path"], os.path.join(raw_folder, lib["name"] + ".bam"))
         os.symlink(lib["path"][:-4] + ".bai", os.path.join(raw_folder, lib["name"] + ".bai"))
+    # Design
+    os.symlink(targets_path, os.path.join(out_folder, "targets.bed"))
     # Command
     bin_dir = os.path.dirname(os.path.abspath(__file__))
     cmd = [
@@ -136,6 +142,7 @@ def predict(libraries, out_folder, cfg_tpl_path, model_path, clf, min_support_re
         cfg_path,
         out_folder
     ]
+    log.debug("submit: ".join(cmd))
     subprocess.check_call(cmd)
 
 
@@ -319,25 +326,31 @@ def getMSISamples(in_folder, samples):
     samples_res = list()
     for spl_name in samples:
         filepath = os.path.join(in_folder, "microsat", spl_name + "_stabilityStatus.json")
-        samples_res.append(ReportIO.parse(filepath))
+        samples_res.append(ReportIO.parse(filepath)[0])
     return samples_res
 
 
 class ClfAction(argparse.Action):
     """Manage classifiers parameter to convert in list of dict."""
-    def __call__(self, parser, namespace, values, option_string=None):
-        new_val = []
-        for curr_val in values:
-            struct_val = {
-                "name": curr_val,
-                "class": curr_val,
+
+    @staticmethod
+    def parsed(classifiers):
+        new_classifiers = []
+        for curr_clf in classifiers:
+            struct_clf = {
+                "name": curr_clf,
+                "class": curr_clf,
                 "params": ""
             }
-            if curr_val.startswith("RandomForest:"):
-                struct_val["class"] = "RandomForest"
-                n_estimators = curr_val.split(":")[1]
-                struct_val["params"] = '{"n_estimators": ' + n_estimators + '}'
-        setattr(namespace, self.dest, new_val)
+            if curr_clf.startswith("RandomForest:"):
+                struct_clf["class"] = "RandomForest"
+                n_estimators = curr_clf.split(":")[1]
+                struct_clf["params"] = '{"n_estimators": ' + n_estimators + '}'
+            new_classifiers.append(struct_clf)
+        return new_classifiers
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, ClfAction.parsed(values))
 
 
 ########################################################################
@@ -351,12 +364,14 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--start-dataset-id', type=int, default=0, help="This option allow you to skip the n first test. [Default: %(default)s]")
     parser.add_argument('-n', '--nb-tests', type=int, default=100, help="The number of couple of test and train datasets created from the original dataset. [Default: %(default)s]")
     parser.add_argument('-a', '--test-ratio', type=float, default=0.4, help="The sample ratio for testing versus samples for learning. [Default: %(default)s]")
-    parser.add_argument('-c', '--classifiers', default=["SVM", "RandomForest:10", "RandomForest:50"], nargs='+', action=ClfAction, help="The additional sklearn classifiers evaluates on MIAmS pairs combination results (example: DecisionTree, KNeighbors, LogisticRegression, RandomForest, RandomForest:n).")
+    clf_dflt = ["SVC", "RandomForest:10", "RandomForest:50"]
+    parsed_clf_dflt = ClfAction.parsed(clf_dflt)
+    parser.add_argument('-c', '--classifiers', default=parsed_clf_dflt, nargs='+', action=ClfAction, help="Classifiers evaluates (example: DecisionTree, KNeighbors, LogisticRegression, RandomForest, RandomForest:n). [Default: {}]".format(clf_dflt))
     parser.add_argument('-v', '--version', action='version', version=__version__)
     # Loci classification
     group_loci = parser.add_argument_group('Loci classification')
     group_loci.add_argument('-t', '--tag-min-support-reads', default=[50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170], nargs='+', type=int, help='The minimum numbers of reads for determine the status. [Default: %(default)s]')
-    group_loci.add_argument('-e', '--learn-min-support-reads', default=200, type=int, help='The minimum numbers of reads for use loci in learning step. [Default: %(default)s]')
+    group_loci.add_argument('-e', '--learn-min-support-reads', default=100, type=int, help='The minimum numbers of reads for use loci in learning step. [Default: %(default)s]')
     # Sample classification
     group_spl = parser.add_argument_group('Sample classification')
     group_spl.add_argument('--consensus-method', default='ratio', choices=['count', 'majority', 'ratio'], help='Method used to determine the sample status from the loci status. Count: if the number of unstable is upper or equal than instability-count the sample will be unstable otherwise it will be stable ; Ratio: if the ratio of unstable/determined loci is upper or equal than instability-ratio the sample will be unstable otherwise it will be stable ; Majority: if the ratio of unstable/determined loci is upper than 0.5 the sample will be unstable, if it is lower than stable the sample will be stable. [Default: %(default)s]')
@@ -379,8 +394,8 @@ if __name__ == "__main__":
 
     # Parameters
     aln_folder = os.path.join(args.data_folder, "aln")
-    annotation_path = os.path.join(args.data_folder, "status.tsv")
-    targets_path = os.path.join(args.data_folder, "targets.bed")
+    annotation_path = os.path.abspath(os.path.join(args.data_folder, "status.tsv"))
+    targets_path = os.path.abspath(os.path.join(args.data_folder, "targets.bed"))
     test_cfg_tpl_path = os.path.join(args.data_folder, "cfg_tag.yml")
     train_cfg_tpl_path = os.path.join(args.data_folder, "cfg_learn.yml")
     if not os.path.exists(args.work_folder):
@@ -427,7 +442,7 @@ if __name__ == "__main__":
             train_samples = [lib for lib in librairies if lib["name"] in train_names]  # Select all libraries corresponding to the train samples
             test_samples = [lib for lib in librairies if lib["name"] in test_names]  # Select all libraries corresponding to the test samples
             # Train
-            train(train_samples, train_out_folder, train_cfg_tpl_path, args.learn_min_support_reads)
+            train(train_samples, train_out_folder, train_cfg_tpl_path, annotation_path, targets_path, args.learn_min_support_reads, log)
             datasets_df_rows = [
                 getDatasetsInfo(
                     dataset_id,
@@ -443,9 +458,9 @@ if __name__ == "__main__":
                 datasets_df.to_csv(FH_out, header=use_header, sep='\t')
             # Predict
             for clfier_idx, (clf, min_support) in enumerate(product(args.classifiers, args.tag_min_support_reads)):
-                model_path = os.path.join(train_out_folder, "microsat", "microsatModel.json")
-                predict(test_samples, test_out_folder, train_cfg_tpl_path, model_path, clf, min_support)
-                reports = getMSISamples(test_out_folder, test_samples)
+                model_path = os.path.abspath(os.path.join(train_out_folder, "microsat", "microsatModel.json"))
+                predict(test_samples, test_out_folder, test_cfg_tpl_path, targets_path, model_path, clf, min_support, log)
+                reports = getMSISamples(test_out_folder, test_names)
                 res_df_rows = getMethodResInfo(
                     dataset_id,
                     "classifier={}, min_support={}".format(clf["name"], min_support),
