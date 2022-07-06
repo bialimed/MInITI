@@ -198,20 +198,20 @@ def getMethodResInfo(dataset_id, config, loci_id_by_name, reports, status_by_spl
     dataset_res = []
     for curr_report in reports:
         expected = status_by_spl[curr_report.name]
-        row = [dataset_id, curr_report.name, res_method_name, config]  # Dataset id, sample name and method
+        row = [dataset_id, curr_report.name, res_method_name, config]  # Dataset id, sample name, method and config
         row.extend([
             expected["sample"],  # expected
             curr_report.results[method_name].status,  # observed
             curr_report.results[method_name].score  # score
         ])
         for locus_name in sorted(loci_id_by_name):
-            loci_pos = loci_id_by_name[locus_name]
-            nb_support = curr_report.loci[loci_pos].results[method_name].data.getCount()
+            locus_pos = loci_id_by_name[locus_name]
+            locus_res = curr_report.loci[locus_pos].results[method_name]
             row.extend([
                 expected[locus_name],  # expected
-                curr_report.loci[loci_pos].results[method_name].status,  # observed
-                curr_report.loci[loci_pos].results[method_name].score,  # score
-                nb_support  # support
+                locus_res.status,  # observed
+                locus_res.score,  # score
+                locus_res.data["lengths"].getCount()  # support
             ])
         dataset_res.append(row)
     return dataset_res
@@ -467,22 +467,24 @@ if __name__ == "__main__":
                     loci_id_by_name,
                     reports,
                     status_by_spl,
-                    clf
+                    clf["class"]
                 )
                 if clfier_idx == 0:
-                    res_df_rows = getMethodResInfo(
-                        dataset_id,
-                        "classifier={}, min_support={}".format("mSINGSUp", min_support),
-                        loci_id_by_name,
-                        reports,
-                        status_by_spl,
-                        "mSINGSUp"
+                    res_df_rows.extend(
+                        getMethodResInfo(
+                            dataset_id,
+                            "classifier={}, min_support={}".format("mSINGSUp", min_support),
+                            loci_id_by_name,
+                            reports,
+                            status_by_spl,
+                            "mSINGSUp"
+                        )
                     )
                 with open(args.results_path, out_mode) as FH_out:
                     res_df = pd.DataFrame.from_records(res_df_rows, columns=getResInfoTitles(loci_id_by_name))
                     res_df.to_csv(FH_out, header=use_header, sep='\t')
-                use_header = True
-                out_mode = "w"
+                use_header = False
+                out_mode = "a"
                 shutil.rmtree(test_out_folder)
             shutil.rmtree(train_out_folder)
         # Next dataset
