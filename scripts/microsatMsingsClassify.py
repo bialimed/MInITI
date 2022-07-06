@@ -60,8 +60,11 @@ def getMSINGSNbPeaks(nb_by_length, peak_height_cutoff):
     return getNbPeaks(nb_by_length, min_peak_height)
 
 
-def getScore(nb_peaks, models_peaks):
-    return 1 - norm.cdf(nb_peaks, loc=models_peaks["avg"], scale=models_peaks["std_dev"])
+def getScore(nb_peaks, models_peaks, status):
+    score = norm.cdf(nb_peaks, loc=models_peaks["avg"], scale=models_peaks["std_dev"])
+    if status == Status.unstable:
+        score = 1 - score
+    return score
 
 
 def getStatus(nb_peaks, models_peaks, std_dev_rate):
@@ -95,7 +98,7 @@ def process(args):
             if locus_data["lengths"].getCount() >= args.min_depth:
                 nb_peaks = getMSINGSNbPeaks(locus_data["lengths"], args.peak_height_cutoff)
                 locus_res.status = getStatus(nb_peaks, models_peaks, args.std_dev_rate)
-                locus_res.score = getScore(nb_peaks, models_peaks)
+                locus_res.score = getScore(nb_peaks, models_peaks, locus_res.status)
             locus.results[args.status_method] = locus_res
         # Classify sample
         if args.consensus_method == "majority":
