@@ -11,6 +11,7 @@ application_dir=`dirname ${assessment_dir}`
 unset PYTHONPATH && export DRMAA_LIBRARY_PATH=$SGE_ROOT/lib/linux-rhel7-x64/libdrmaa.so && \
 source /Anapath/soft/conda/current/bin/activate miniti && \
 snakemake \
+--printshellcmds \
 --jobs 100 \
 --latency-wait 240 \
 --restart-times 2 \
