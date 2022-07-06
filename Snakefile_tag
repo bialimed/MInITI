@@ -5,9 +5,10 @@ __version__ = '1.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-import re
 import glob
+import json
 from time import strftime, gmtime
+import re
 
 ################################################### dev
 app_dir = os.path.dirname(workflow.snakefile)
@@ -136,6 +137,8 @@ consensus_method = cfg_classifier["sample"].get("consensus_method", "ratio")
 param_threshold = "params_instability_" + consensus_method
 
 cfg_cls_sklearn = cfg_classifier["locus"]["sklearn"]
+if cfg_cls_sklearn.get("classifier_params") and not isinstanceof(cfg_cls_sklearn.get("classifier_params"), str):
+    cfg_cls_sklearn["classifier_params"] = json.dumps(cfg_cls_sklearn.get("classifier_params"))
 microsatSklearnClassify(**{
     "in_model": cfg_classifier["model"],
     "out_report": "microsat/{sample}_sklearnClassif.json",

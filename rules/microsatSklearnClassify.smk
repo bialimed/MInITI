@@ -1,7 +1,7 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2020 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 
 def microsatSklearnClassify(
@@ -10,7 +10,7 @@ def microsatSklearnClassify(
         out_report="microsat/{sample}_stabilityStatus.json",
         out_stderr="logs/{sample}_microsatStabilityClassify_stderr.txt",
         params_classifier=None,
-        params_classifier_params=None,
+        params_classifier_params=None,  # Must be str
         params_consensus_method="ratio",
         params_data_method=None,
         params_instability_ratio=None,
@@ -24,6 +24,8 @@ def microsatSklearnClassify(
         params_keep_outputs=False,
         params_stderr_append=False):
     """Predict stability classes and scores for loci and samples using an sklearn classifer."""
+    if not isinstance(params_classifier_params, str):
+        raise Exception('The argument "params_classifier_params" in rule microsatSklearnClassify must be a string not {}: {}.'.format(type(params_classifier_params), params_classifier_params))
     rule microsatSklearnClassify:
         input:
             evaluated = in_evaluated,
@@ -35,7 +37,7 @@ def microsatSklearnClassify(
         params:
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatSklearnClassify.py")),
             classifier = "" if params_classifier is None else "--classifier {}".format(params_classifier),
-            classifier_params = "" if params_classifier_params is None else "--classifier-params {}".format(params_classifier_params),
+            classifier_params = "" if params_classifier_params is None else "--classifier-params '{}'".format(params_classifier_params),
             consensus_method = "" if params_consensus_method is None else "--consensus-method {}".format(params_consensus_method),
             data_method = "" if params_data_method is None else "--data-method {}".format(params_data_method),
             instability_ratio = "" if params_instability_ratio is None or params_consensus_method == "count" else "--instability-ratio {}".format(params_instability_ratio),
