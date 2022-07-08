@@ -118,7 +118,9 @@ else:
 microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
+    params_keep_duplicates=config.get("classifier")["locus"]["keep_duplicates"],
     params_method_name="model"
+    params_stitch_count=config.get("classifier")["locus"]["stitch_count"]
 )
 microsatStatusToAnnot(
     in_loci_status=config.get("input")["known_status"],
@@ -131,7 +133,7 @@ microsatCreateModel(
     in_microsatellites=config.get("reference")["microsatellites"],
     in_length_distributions=expand("microsat/{sample}_microsatLenDistrib.json", sample=samples_names),
     out_model="microsat/microsatModel.json",
-    params_min_support=config.get("filters")["min_support"],
+    params_min_support=config.get("classifier")["locus"]["min_support"],
     params_keep_outputs=True
 )
 

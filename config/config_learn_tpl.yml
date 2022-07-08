@@ -1,5 +1,8 @@
-filters:
-  min_support: 100
+classifier:
+  locus:
+    keep_duplicates: false
+    min_support: 100
+    stitch_count: false
 input:
   R1_pattern:   # raw/{sample}_R1.fastq.gz
   R2_pattern:   # raw/{sample}_R2.fastq.gz

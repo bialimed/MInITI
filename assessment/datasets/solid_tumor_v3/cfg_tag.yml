@@ -1,5 +1,6 @@
 classifier:
   locus:
+    keep_duplicates: ##KEEP_DUPLICATES##
     min_support: ##MIN_SUPPORT##
     msings:
       peak_height_cutoff: 0.05
@@ -7,7 +8,7 @@ classifier:
     sklearn:
       classifier: ##CLASSIFIER##
       classifier_params: ##CLASSIFIER_PARAMS##
-    stitch_count: false
+    stitch_count: ##STITCH_COUNT##
   model: ##MODEL_PATH##
   random_seed: 0
   sample:

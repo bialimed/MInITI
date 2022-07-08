@@ -1,7 +1,7 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2020 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 
 
 def microsatLenDistrib(
@@ -9,6 +9,7 @@ def microsatLenDistrib(
         in_microsatellites="design/microsat.bed",
         out_results="microsat/{sample}_microsatLenDistrib.json",
         out_stderr="logs/{sample}_microsatLenDistrib_stderr.txt",
+        params_keep_duplicates=False,
         params_method_name=None,
         params_padding=None,
         params_reads_stitched=False,
@@ -27,6 +28,7 @@ def microsatLenDistrib(
             out_stderr
         params:
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatLenDistrib.py")),
+            keep_duplicates = "--keep-duplicates" if params_keep_duplicates is True else "",
             method_name = "" if params_method_name is None else "--method-name {}".format(params_method_name),
             padding = "" if params_padding is None else "--padding {}".format(params_padding),
             reads_stitched = "--reads-stitched" if params_reads_stitched is True else "",
@@ -37,6 +39,7 @@ def microsatLenDistrib(
             "envs/anacore-utils.yml"
         shell:
             "{params.bin_path}"
+            " {params.keep_duplicates}"
             " {params.method_name}"
             " {params.padding}"
             " {params.reads_stitched}"

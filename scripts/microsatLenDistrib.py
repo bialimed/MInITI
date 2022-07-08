@@ -3,7 +3,7 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2020 CHU Toulouse'
 __license__ = 'GNU General Public License'
-__version__ = '2.0.0'
+__version__ = '2.1.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
@@ -23,7 +23,7 @@ import sys
 # FUNCTIONS
 #
 ########################################################################
-def getMicrosatLengths(aln_reader, microsat, padding=2):
+def getMicrosatLengths(aln_reader, microsat, padding=2, keep_duplicates=False):
     """
     Return length distribution for the microsatellite from reads.
 
@@ -33,6 +33,8 @@ def getMicrosatLengths(aln_reader, microsat, padding=2):
     :type microsat: anacore.region.Region
     :param padding: Minimum number of nucleotids aligned on each side around the microsatellite to take read into account. This parameter is used to skip reads containing an incomplete microsatellite.
     :type padding: int
+    :param keep_duplicates: If True duplicates reads are taking into account in lengths distribution.
+    :type keep_duplicates: boolean
     :return: Length distribution for the microsatellite from reads.
     :rtype: dict
     """
@@ -40,7 +42,7 @@ def getMicrosatLengths(aln_reader, microsat, padding=2):
     ms_end_0 = microsat.end - 1
     nb_by_length = {}
     for read in aln_reader.fetch(microsat.reference.name, ms_start_0, microsat.end):  # For each read ovelapping current microsat
-        if not read.is_duplicate and not read.is_secondary and not read.is_supplementary:
+        if (keep_duplicates or not read.is_duplicate) and not read.is_secondary and not read.is_supplementary:
             if read.reference_start + 1 <= microsat.start - padding and read.reference_end >= microsat.end + padding:  # Align on microsat and padding
                 read_ms_length = getReadRegionLength(read, ms_start_0, ms_end_0)
                 if read_ms_length in nb_by_length:
@@ -50,7 +52,7 @@ def getMicrosatLengths(aln_reader, microsat, padding=2):
     return nb_by_length
 
 
-def getMicrosatStitchedLengths(aln_reader, microsat, padding=2):
+def getMicrosatStitchedLengths(aln_reader, microsat, padding=2, keep_duplicates=False):
     """
     Return length distribution for the microsatellite from mate consensus reads.
 
@@ -60,6 +62,8 @@ def getMicrosatStitchedLengths(aln_reader, microsat, padding=2):
     :type microsat: anacore.region.Region
     :param padding: Minimum number of nucleotids aligned on each side around the microsatellite to take read into account. This parameter is used to skip reads containing an incomplete microsatellite.
     :type padding: int
+    :param keep_duplicates: If True duplicates reads are taking into account in lengths distribution.
+    :type keep_duplicates: boolean
     :return: Length distribution for the microsatellite from mate consensus reads.
     :rtype: dict
     """
@@ -68,7 +72,7 @@ def getMicrosatStitchedLengths(aln_reader, microsat, padding=2):
     nb_by_length = dict()
     mate = dict()
     for read in aln_reader.fetch(microsat.reference.name, ms_start_0, microsat.end):  # For each read ovelapping current microsat
-        if not read.is_duplicate and not read.is_secondary and not read.is_supplementary:
+        if (keep_duplicates or not read.is_duplicate) and not read.is_secondary and not read.is_supplementary:
             if read.reference_start + 1 <= microsat.start - padding and read.reference_end >= microsat.end + padding:  # Align on microsat and padding
                 read_ms_length = getReadRegionLength(read, ms_start_0, ms_end_0)
                 if read.query_name not in mate:
@@ -122,6 +126,7 @@ def getReadRegionLength(read, start, end):
 if __name__ == "__main__":
     # Manage parameters
     parser = argparse.ArgumentParser(description='Retrieves the reads length distribution for loci.')
+    parser.add_argument('-d', '--keep-duplicates', action='store_true', help='Duplicates reads are taking into account in lengths distribution.')
     parser.add_argument('-m', '--method-name', default="aln", help='Name of the method used to produce lengths data. [Default: %(default)s]')
     parser.add_argument('-p', '--padding', type=int, default=2, help='Minimum number of nucleotids aligned on each side around the microsatellite to take read into account. This parameter is used to skip reads containing an incomplete microsatellite. [Default: %(default)s]')
     parser.add_argument('-n', '--sample-name', help='Name of the sample. [Default: alignments file name without extension]')
@@ -152,9 +157,9 @@ if __name__ == "__main__":
     with pysam.AlignmentFile(args.input_alignments, "rb") as aln_reader:
         for curr_ms in microsat:
             if args.stitch_count:
-                nb_by_length = getMicrosatStitchedLengths(aln_reader, curr_ms, args.padding)
+                nb_by_length = getMicrosatStitchedLengths(aln_reader, curr_ms, args.padding, args.keep_duplicates)
             else:
-                nb_by_length = getMicrosatLengths(aln_reader, curr_ms, args.padding)
+                nb_by_length = getMicrosatLengths(aln_reader, curr_ms, args.padding, args.keep_duplicates)
             # Create locus entry
             locus_id = "{}:{}-{}".format(curr_ms.reference.name, curr_ms.start - 1, curr_ms.end)
             locus_by_id[locus_id] = Locus(

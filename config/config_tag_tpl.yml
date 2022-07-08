@@ -1,5 +1,6 @@
 classifier:
   locus:
+    keep_duplicates: false
     min_support: 100
     msings:
       peak_height_cutoff: 0.05

@@ -127,8 +127,9 @@ if aln_pattern is None:
 microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
+    params_keep_duplicates=config.get("classifier")["locus"]["keep_duplicates"],
     params_method_name=config.get("classifier")["locus"]["sklearn"]["classifier"],
-    params_stitch_count=config.get("classifier")["locus"]["stitch_count"],
+    params_stitch_count=config.get("classifier")["locus"]["stitch_count"]
 )
 
 # Classify
