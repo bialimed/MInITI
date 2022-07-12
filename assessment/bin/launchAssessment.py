@@ -84,16 +84,16 @@ def getStatus(in_annotations, samples):
     return status_by_spl
 
 
-def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_support_reads, stitching, keep_dup, log):
+def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_support_reads, stitching, duplicates, log):
     os.makedirs(out_folder)
     # Create config
     cfg_path = os.path.join(out_folder, "config.yml")
     with open(cfg_tpl_path) as reader:
         with open(cfg_path, "w") as writer:
             for line in reader:
-                line = line.replace("##KEEP_DUPLICATES##", str(keep_dup).lower())
+                line = line.replace("##KEEP_DUPLICATES##", str(duplicates == "with").lower())
                 line = line.replace("##MIN_SUPPORT##", str(int(min_support_reads / 2)) if stitching else str(min_support_reads))
-                line = line.replace("##STITCH_COUNT##", str(stitching).lower())
+                line = line.replace("##STITCH_COUNT##", str(stitching == "with").lower())
                 writer.write(line)
     # Create raw
     raw_folder = os.path.join(out_folder, "raw")
@@ -116,7 +116,7 @@ def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_su
     subprocess.check_call(cmd)
 
 
-def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, min_support_reads, stitching, keep_dup, log):
+def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, min_support_reads, stitching, duplicates, log):
     os.makedirs(out_folder)
     # Create config
     cfg_path = os.path.join(out_folder, "config.yml")
@@ -125,10 +125,10 @@ def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, 
             for line in reader:
                 line = line.replace("##CLASSIFIER##", clf["class"])
                 line = line.replace("##CLASSIFIER_PARAMS##", clf["params"])
-                line = line.replace("##KEEP_DUPLICATES##", str(keep_dup).lower())
+                line = line.replace("##KEEP_DUPLICATES##", str(duplicates == "with").lower())
                 line = line.replace("##MIN_SUPPORT##", str(int(min_support_reads / 2)) if stitching else str(min_support_reads))
                 line = line.replace("##MODEL_PATH##", model_path)
-                line = line.replace("##STITCH_COUNT##", str(stitching).lower())
+                line = line.replace("##STITCH_COUNT##", str(stitching == "with").lower())
                 writer.write(line)
     # Create raw
     raw_folder = os.path.join(out_folder, "raw")
@@ -162,8 +162,11 @@ def getResInfoTitles(loci_id_by_name):
     titles = [
         "dataset_id",
         "lib_name",
-        "method_name",
         "config",
+        "classifier",
+        "min_support",
+        "stitching",
+        "duplicates",
         "spl_expected_status",
         "spl_observed_status",
         "spl_pred_score"
@@ -178,7 +181,7 @@ def getResInfoTitles(loci_id_by_name):
     return titles
 
 
-def getMethodResInfo(dataset_id, config, loci_id_by_name, reports, status_by_spl, method_name, res_method_name=None):
+def getMethodResInfo(dataset_id, clf_name, min_support, stitching, duplicates, loci_id_by_name, reports, status_by_spl, method_name):
     """
     Return rows from the specified method for the results dataframe.
 
@@ -192,17 +195,21 @@ def getMethodResInfo(dataset_id, config, loci_id_by_name, reports, status_by_spl
     :type status_by_spl: dict
     :param method_name: Name of the processed method.
     :type method_name: str
-    :param res_method_name: Name stored in results dataframe for the processed method.
-    :type res_method_name: str
     :return: Rows for results dataframe.
     :rtype: list
     """
-    if res_method_name is None:
-        res_method_name = method_name
     dataset_res = []
     for curr_report in reports:
         expected = status_by_spl[curr_report.name]
-        row = [dataset_id, curr_report.name, res_method_name, config]  # Dataset id, sample name, method and config
+        row = [
+            dataset_id,
+            curr_report.name,  # sample name
+            "clf={}, min_supp={}, sitch={}, dup={}".format(clf_name, min_support, stitching, duplicates),
+            clf_name,
+            min_support,
+            stitching,
+            duplicates
+        ]
         row.extend([
             expected["sample"],  # expected
             curr_report.results[method_name].status,  # observed
@@ -374,8 +381,8 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--version', action='version', version=__version__)
     # Loci classification
     group_loci = parser.add_argument_group('Loci classification')
-    group_loci.add_argument('--keep-duplicates', default=[False], nargs='+', type=bool, help='****************. [Default: %(default)s]')
-    group_loci.add_argument('--stitching', default=[False], nargs='+', type=bool, help='****************. [Default: %(default)s]')
+    group_loci.add_argument('--duplicates', default=["without"], nargs='+', choices=["with", "without"], help='****************. [Default: %(default)s]')
+    group_loci.add_argument('--stitching', default=["without"], nargs='+', choices=["with", "without"], help='****************. [Default: %(default)s]')
     group_loci.add_argument('-t', '--tag-min-support-reads', default=[50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170], nargs='+', type=int, help='The minimum numbers of reads for determine the status. [Default: %(default)s]')
     group_loci.add_argument('-e', '--learn-min-support-reads', default=100, type=int, help='The minimum numbers of reads for use loci in learning step. [Default: %(default)s]')
     # Sample classification
@@ -460,39 +467,46 @@ if __name__ == "__main__":
             datasets_df = pd.DataFrame.from_records(datasets_df_rows, columns=getDatasetsInfoTitles(loci_id_by_name))
             with open(args.datasets_path, out_mode) as FH_out:
                 datasets_df.to_csv(FH_out, header=use_header, sep='\t')
-            for (stitching, keep_dup) in product(args.stitching, args.keep_duplicates):
+            for (stitching, duplicates) in product(args.stitching, args.duplicates):
                 # Train
-                train(train_samples, train_out_folder, train_cfg_tpl_path, annotation_path, targets_path, args.learn_min_support_reads, stitching, keep_dup, log)
+                train(train_samples, train_out_folder, train_cfg_tpl_path, annotation_path, targets_path, args.learn_min_support_reads, stitching, duplicates, log)
                 # Predict
-                for clfier_idx, (clf, min_support) in enumerate(product(args.classifiers, args.tag_min_support_reads)):
-                    model_path = os.path.abspath(os.path.join(train_out_folder, "microsat", "microsatModel.json"))
-                    predict(test_samples, test_out_folder, test_cfg_tpl_path, targets_path, model_path, clf, min_support, stitching, keep_dup, log)
-                    reports = getMSISamples(test_out_folder, test_names)
-                    res_df_rows = getMethodResInfo(
-                        dataset_id,
-                        "classifier={}, min_support={}, sitching={}, keep_dup={}".format(clf["name"], min_support, stitching, keep_dup),
-                        loci_id_by_name,
-                        reports,
-                        status_by_spl,
-                        clf["class"]
-                    )
-                    if clfier_idx == 0:
-                        res_df_rows.extend(
-                            getMethodResInfo(
-                                dataset_id,
-                                "classifier={}, min_support={}, sitching={}, keep_dup={}".format("mSINGSUp", min_support, stitching, keep_dup),
-                                loci_id_by_name,
-                                reports,
-                                status_by_spl,
-                                "mSINGSUp"
-                            )
+                for clfier_idx, clf in enumerate(args.classifiers):
+                    for min_support in args.tag_min_support_reads:
+                        model_path = os.path.abspath(os.path.join(train_out_folder, "microsat", "microsatModel.json"))
+                        predict(test_samples, test_out_folder, test_cfg_tpl_path, targets_path, model_path, clf, min_support, stitching, duplicates, log)
+                        reports = getMSISamples(test_out_folder, test_names)
+                        res_df_rows = getMethodResInfo(
+                            dataset_id,
+                            clf["name"],
+                            min_support,
+                            stitching,
+                            duplicates,
+                            loci_id_by_name,
+                            reports,
+                            status_by_spl,
+                            clf["class"]
                         )
-                    with open(args.results_path, out_mode) as FH_out:
-                        res_df = pd.DataFrame.from_records(res_df_rows, columns=getResInfoTitles(loci_id_by_name))
-                        res_df.to_csv(FH_out, header=use_header, sep='\t')
-                    use_header = False
-                    out_mode = "a"
-                    shutil.rmtree(test_out_folder)
+                        if clfier_idx == 0:
+                            res_df_rows.extend(
+                                getMethodResInfo(
+                                    dataset_id,
+                                    "mSINGSUp",
+                                    min_support,
+                                    stitching,
+                                    duplicates,
+                                    loci_id_by_name,
+                                    reports,
+                                    status_by_spl,
+                                    "mSINGSUp"
+                                )
+                            )
+                        with open(args.results_path, out_mode) as FH_out:
+                            res_df = pd.DataFrame.from_records(res_df_rows, columns=getResInfoTitles(loci_id_by_name))
+                            res_df.to_csv(FH_out, header=use_header, sep='\t')
+                        use_header = False
+                        out_mode = "a"
+                        shutil.rmtree(test_out_folder)
                 shutil.rmtree(train_out_folder)
         # Next dataset
         dataset_id += 1
