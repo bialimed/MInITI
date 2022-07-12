@@ -24,8 +24,9 @@ def microsatSklearnClassify(
         params_keep_outputs=False,
         params_stderr_append=False):
     """Predict stability classes and scores for loci and samples using an sklearn classifer."""
-    if not isinstance(params_classifier_params, str):
-        raise Exception('The argument "params_classifier_params" in rule microsatSklearnClassify must be a string not {}: {}.'.format(type(params_classifier_params), params_classifier_params))
+    if params_classifier_params is not None:
+        if not isinstance(params_classifier_params, str):
+            raise Exception('The argument "params_classifier_params" in rule microsatSklearnClassify must be a string not {}: {}.'.format(type(params_classifier_params), params_classifier_params))
     rule microsatSklearnClassify:
         input:
             evaluated = in_evaluated,
