@@ -119,7 +119,7 @@ microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
     params_keep_duplicates=config.get("classifier")["locus"]["keep_duplicates"],
-    params_method_name="model"
+    params_method_name="model",
     params_stitch_count=config.get("classifier")["locus"]["stitch_count"]
 )
 microsatStatusToAnnot(
