@@ -1,4 +1,13 @@
 /*!
+  * AnaCore-web slidePanel component v1.1.1
+  * Copyright 2021 CHU-Toulouse
+  * Author Frederic Escudie
+  * Licensed under GNU General Public License
+  */
+.slider .slide-panel{position:absolute;top:0;bottom:0;left:0;right:0;background:#222;color:#eee;overflow:auto;padding:10px}.slider{position:fixed;transition:.3s ease-out;z-index:1030}.slide-btn-top{width:100%;margin-bottom:10px}.slide-btn-bottom{width:100%;margin-bottom:10px}.slide-btn-right{height:100%;margin-right:10px;float:left}.slide-btn-left{height:100%;margin-left:10px;float:right}.slide-content-right{margin-left:52px}.slide-content-left{margin-right:52px}.slider.right-slide,.slider.left-slide{width:90%}@media only screen and (min-width:768px) and (max-width:1099px){.slider.right-slide,.slider.left-slide{width:70%}}@media only screen and (min-width:1100px){.slider.right-slide,.slider.left-slide{width:60%}}.slider.right-slide.open,.slider.left-slide.open{transform:translateX(0%)}.slider.right-slide{top:0;bottom:0;right:0;transform:translateX(100%)}.slider.left-slide{top:0;bottom:0;left:0;transform:translateX(-100%)}.slider.top-slide,.slider.bottom-slide{height:90%;width:100%}@media only screen and (min-height:768px){.slider.top-slide,.slider.bottom-slide{height:70%;width:100%}}.slider.top-slide.open,.slider.bottom-slide.open{transform:translateY(0%)}.slider.top-slide{left:0;right:0;top:0;transform:translateY(-100%)}.slider.bottom-slide{left:0;right:0;bottom:0;transform:translateY(100%)}
+
+
+/*!
   * AnaCore-web thresholdAlert component v1.1.0
   * Copyright 2018 IUCT-O
   * Author Frederic Escudie
@@ -40,7 +49,7 @@
   * Author Frederic Escudie
   * Licensed under GNU General Public License
   */
-.msi-graph-spl-alerts .row{margin-left:0;margin-right:0}.msi-graph-spl-alerts .col-md-6{padding-right:8px;padding-left:8px}
+.msi-graph-spl-alerts .row{margin-left:0;margin-right:0}.msi-graph-spl-alerts .col-md-6{padding-right:8px;padding-left:8px}.msi-graph-spl-alerts .status{margin-right:5px}
 
 
 /*!
