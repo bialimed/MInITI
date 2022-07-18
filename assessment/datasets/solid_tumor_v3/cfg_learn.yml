@@ -1,8 +1,10 @@
 classifier:
   locus:
-    keep_duplicates: ##KEEP_DUPLICATES##
+    count:
+      keep_duplicates: ##KEEP_DUPLICATES##
+      padding: ##PADDING##
+      stitch: ##STITCH_COUNT##
     min_support: ##MIN_SUPPORT##
-    stitch_count: ##STITCH_COUNT##
 input:
   R1_pattern:
   R2_pattern:

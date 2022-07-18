@@ -84,7 +84,7 @@ def getStatus(in_annotations, samples):
     return status_by_spl
 
 
-def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_support_reads, stitching, duplicates, log):
+def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, padding, min_support_reads, stitching, duplicates, log):
     os.makedirs(out_folder)
     # Create config
     cfg_path = os.path.join(out_folder, "config.yml")
@@ -93,6 +93,7 @@ def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_su
             for line in reader:
                 line = line.replace("##KEEP_DUPLICATES##", str(duplicates == "with").lower())
                 line = line.replace("##MIN_SUPPORT##", str(int(min_support_reads / 2)) if stitching else str(min_support_reads))
+                line = line.replace("##PADDING##", str(padding))
                 line = line.replace("##STITCH_COUNT##", str(stitching == "with").lower())
                 writer.write(line)
     # Create raw
@@ -116,7 +117,7 @@ def train(libraries, out_folder, cfg_tpl_path, status_path, targets_path, min_su
     subprocess.check_call(cmd)
 
 
-def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, min_support_reads, stitching, duplicates, log):
+def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, padding, min_support_reads, stitching, duplicates, log):
     os.makedirs(out_folder)
     # Create config
     cfg_path = os.path.join(out_folder, "config.yml")
@@ -128,6 +129,7 @@ def predict(libraries, out_folder, cfg_tpl_path, targets_path, model_path, clf, 
                 line = line.replace("##KEEP_DUPLICATES##", str(duplicates == "with").lower())
                 line = line.replace("##MIN_SUPPORT##", str(int(min_support_reads / 2)) if stitching else str(min_support_reads))
                 line = line.replace("##MODEL_PATH##", model_path)
+                line = line.replace("##PADDING##", str(padding))
                 line = line.replace("##STITCH_COUNT##", str(stitching == "with").lower())
                 writer.write(line)
     # Create raw
@@ -164,6 +166,7 @@ def getResInfoTitles(loci_id_by_name):
         "lib_name",
         "config",
         "classifier",
+        "padding"
         "min_support",
         "stitching",
         "duplicates",
@@ -181,7 +184,7 @@ def getResInfoTitles(loci_id_by_name):
     return titles
 
 
-def getMethodResInfo(dataset_id, clf_name, min_support, stitching, duplicates, loci_id_by_name, reports, status_by_spl, method_name):
+def getMethodResInfo(dataset_id, clf_name, padding, min_support, stitching, duplicates, loci_id_by_name, reports, status_by_spl, method_name):
     """
     Return rows from the specified method for the results dataframe.
 
@@ -204,8 +207,9 @@ def getMethodResInfo(dataset_id, clf_name, min_support, stitching, duplicates, l
         row = [
             dataset_id,
             curr_report.name,  # sample name
-            "clf={}, min_supp={}, sitch={}, dup={}".format(clf_name, min_support, stitching, duplicates),
+            "clf={}, pad={} min_supp={}, sitch={}, dup={}".format(clf_name, padding, min_support, stitching, duplicates),
             clf_name,
+            padding,
             min_support,
             stitching,
             duplicates
@@ -381,8 +385,9 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--version', action='version', version=__version__)
     # Loci classification
     group_loci = parser.add_argument_group('Loci classification')
-    group_loci.add_argument('--duplicates', default=["without"], nargs='+', choices=["with", "without"], help='****************. [Default: %(default)s]')
-    group_loci.add_argument('--stitching', default=["without"], nargs='+', choices=["with", "without"], help='****************. [Default: %(default)s]')
+    group_loci.add_argument('--padding', default=[2], nargs='+', type=int, help='Minimum number of nucleotids aligned on each side around the microsatellite to take read into account. This parameter is used to skip reads containing an incomplete microsatellite. [Default: %(default)s]')
+    group_loci.add_argument('--duplicates', default=["without"], nargs='+', choices=["with", "without"], help='Duplicates reads are taking into account in lengths distribution ("with"). [Default: %(default)s]')
+    group_loci.add_argument('--stitching', default=["without"], nargs='+', choices=["with", "without"], help='Reads pair is taking account if the length of repeat is the same on two mates (one count). Otherwise, reads are not take into account. [Default: %(default)s]')
     group_loci.add_argument('-t', '--tag-min-support-reads', default=[50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170], nargs='+', type=int, help='The minimum numbers of reads for determine the status. [Default: %(default)s]')
     group_loci.add_argument('-e', '--learn-min-support-reads', default=100, type=int, help='The minimum numbers of reads for use loci in learning step. [Default: %(default)s]')
     # Sample classification
@@ -467,18 +472,19 @@ if __name__ == "__main__":
             datasets_df = pd.DataFrame.from_records(datasets_df_rows, columns=getDatasetsInfoTitles(loci_id_by_name))
             with open(args.datasets_path, out_mode) as FH_out:
                 datasets_df.to_csv(FH_out, header=use_header, sep='\t')
-            for (stitching, duplicates) in product(args.stitching, args.duplicates):
+            for (padding, stitching, duplicates) in product(args.padding, args.stitching, args.duplicates):
                 # Train
-                train(train_samples, train_out_folder, train_cfg_tpl_path, annotation_path, targets_path, args.learn_min_support_reads, stitching, duplicates, log)
+                train(train_samples, train_out_folder, train_cfg_tpl_path, annotation_path, targets_path, padding, args.learn_min_support_reads, stitching, duplicates, log)
                 # Predict
                 for clfier_idx, clf in enumerate(args.classifiers):
                     for min_support in args.tag_min_support_reads:
                         model_path = os.path.abspath(os.path.join(train_out_folder, "microsat", "microsatModel.json"))
-                        predict(test_samples, test_out_folder, test_cfg_tpl_path, targets_path, model_path, clf, min_support, stitching, duplicates, log)
+                        predict(test_samples, test_out_folder, test_cfg_tpl_path, targets_path, model_path, clf, padding, min_support, stitching, duplicates, log)
                         reports = getMSISamples(test_out_folder, test_names)
                         res_df_rows = getMethodResInfo(
                             dataset_id,
                             clf["name"],
+                            padding,
                             min_support,
                             stitching,
                             duplicates,
@@ -492,6 +498,7 @@ if __name__ == "__main__":
                                 getMethodResInfo(
                                     dataset_id,
                                     "mSINGSUp",
+                                    padding,
                                     min_support,
                                     stitching,
                                     duplicates,

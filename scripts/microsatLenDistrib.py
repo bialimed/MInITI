@@ -134,7 +134,7 @@ if __name__ == "__main__":
     group_stitching = parser.add_argument_group('Stitching')
     stitching_exclusion = group_stitching.add_mutually_exclusive_group()
     stitching_exclusion.add_argument('-e', '--reads-stitched', action='store_true', help='Reads has been stitched before alignment.')
-    stitching_exclusion.add_argument('-s', '--stitch-count', action='store_true', help='Reads has not stitched before alignment but count must be processed on mate consensus.')
+    stitching_exclusion.add_argument('-s', '--stitch-count', action='store_true', help='Reads are not stitched before alignment but count must be processed on mate consensus.')
     group_input = parser.add_argument_group('Inputs')
     group_input.add_argument('-a', '--input-alignments', required=True, help='Path to the file containing reads or fragment alignment. (format: BAM).')
     group_input.add_argument('-i', '--input-microsatellites', required=True, help='Path to the file containing microsatellites regions. (format: BED).')

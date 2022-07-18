@@ -1,8 +1,10 @@
 classifier:
   locus:
-    keep_duplicates: false
+    count:
+      keep_duplicates: false
+      padding: 2
+      stitch: false
     min_support: 100
-    stitch_count: false
 input:
   R1_pattern:   # raw/{sample}_R1.fastq.gz
   R2_pattern:   # raw/{sample}_R2.fastq.gz

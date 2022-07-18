@@ -115,12 +115,14 @@ else:
     )
 
 # Create model
+cfg_clf_ct = config.get("classifier").get("locus").get("count")
 microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
-    params_keep_duplicates=config.get("classifier")["locus"]["keep_duplicates"],
+    params_keep_duplicates=cfg_clf_ct["keep_duplicates"],
     params_method_name="model",
-    params_stitch_count=config.get("classifier")["locus"]["stitch_count"]
+    params_padding=cfg_clf_ct["padding"],
+    params_stitch_count=cfg_clf_ct["stitch"]
 )
 microsatStatusToAnnot(
     in_loci_status=config.get("input")["known_status"],

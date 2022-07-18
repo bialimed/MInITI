@@ -1,6 +1,9 @@
 classifier:
   locus:
-    keep_duplicates: false
+    count:
+      keep_duplicates: false
+      padding: 2
+      stitch: false
     min_support: 100
     msings:
       peak_height_cutoff: 0.05
@@ -8,7 +11,6 @@ classifier:
     sklearn:
       classifier: SVC
       classifier_params:
-    stitch_count: false
   model:  # learn/microsat/microsatModel.json
   random_seed: 0
   sample:
