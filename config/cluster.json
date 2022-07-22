@@ -11,6 +11,18 @@
       vmem: "15G",
       threads: 1
   },
+  markDuplicates: {
+      queue: "normal",
+      mem: "6G",
+      vmem: "18G",
+      threads: 1
+  },
+  mergeMSIReports: {
+      queue: "normal",
+      mem: "3G",
+      vmem: "3G",
+      threads: 1 
+  },
   microsatCreateModel: {
       queue: "normal",
       mem: "3G",
@@ -41,10 +53,22 @@
       vmem: "3G",
       threads: 1
   },
-  markDuplicates: {
+  modelToBaseline: {
+      queue: "normal",
+      mem: "3G",
+      vmem: "3G",
+      threads: 1
+  },
+  msisensorpro_pro: {
       queue: "normal",
       mem: "6G",
-      vmem: "18G",
+      vmem: "6G",
+      threads: 1      
+  },
+  msisensorproProToreport: {
+      queue: "normal",
+      mem: "3G",
+      vmem: "3G",
       threads: 1
   },
   wfReport: {

@@ -14,10 +14,9 @@ classifier:
   model: ##MODEL_PATH##
   random_seed: 0
   sample:
-    consensus_method: ratio
     instability_threshold: 0.3
     locus_weight_is_score: false
-    min_voting_loci: 4
+    min_voting_loci: 0.8
     undetermined_weight: 0
 input:
   aln_pattern: raw/{sample}.bam

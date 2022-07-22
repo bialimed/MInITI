@@ -11,10 +11,8 @@ def microsatSklearnClassify(
         out_stderr="logs/{sample}_microsatStabilityClassify_stderr.txt",
         params_classifier=None,
         params_classifier_params=None,  # Must be str
-        params_consensus_method="ratio",
         params_data_method=None,
         params_instability_ratio=None,
-        params_instability_count=None,
         params_locus_weight_is_score=False,
         params_min_depth=None,
         params_min_voting_loci=None,
@@ -39,10 +37,8 @@ def microsatSklearnClassify(
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatSklearnClassify.py")),
             classifier = "" if params_classifier is None else "--classifier {}".format(params_classifier),
             classifier_params = "" if params_classifier_params is None else "--classifier-params '{}'".format(params_classifier_params),
-            consensus_method = "" if params_consensus_method is None else "--consensus-method {}".format(params_consensus_method),
             data_method = "" if params_data_method is None else "--data-method {}".format(params_data_method),
             instability_ratio = "" if params_instability_ratio is None or params_consensus_method == "count" else "--instability-ratio {}".format(params_instability_ratio),
-            instability_count = "" if params_instability_count is None or params_consensus_method == "ratio" else "--instability-ratio {}".format(params_instability_count),
             locus_weight_is_score = "" if params_locus_weight_is_score is None else "--locus-weight-is-score",
             min_depth = "" if params_min_depth is None else "--min-depth {}".format(params_min_depth),
             min_voting_loci = "" if params_min_voting_loci is None else "--min-voting-loci {}".format(params_min_voting_loci),
@@ -56,10 +52,8 @@ def microsatSklearnClassify(
             "{params.bin_path}"
             " {params.classifier}"
             " {params.classifier_params}"
-            " {params.consensus_method}"
             " {params.data_method}"
             " {params.instability_ratio}"
-            " {params.instability_count}"
             " {params.locus_weight_is_score}"
             " {params.min_depth}"
             " {params.random_seed}"

@@ -101,12 +101,7 @@ def process(args):
                 locus_res.score = getScore(nb_peaks, models_peaks, locus_res.status)
             locus.results[args.status_method] = locus_res
         # Classify sample
-        if args.consensus_method == "majority":
-            curr_spl.setStatusByMajority(args.status_method, args.min_voting_loci)
-        elif args.consensus_method == "ratio":
-            curr_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
-        elif args.consensus_method == "count":
-            curr_spl.setStatusByInstabilityCount(args.status_method, args.min_voting_loci, args.instability_count)
+        curr_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
         curr_spl.setScore(args.status_method, args.undetermined_weight, args.locus_weight_is_score)
     # Write output
     ReportIO.write(eval_list, args.output_report)
@@ -123,16 +118,14 @@ if __name__ == "__main__":
     parser.add_argument('--status-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
-    group_locus.add_argument('-m', '--min-depth', default=150, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')
+    group_locus.add_argument('-m', '--min-depth', default=60, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')
     group_locus.add_argument('-p', '--peak-height-cutoff', default=0.05, type=float, help='Minimum height to consider a peak in size distribution as rate of the highest peak. [Default: %(default)s]')
     group_locus.add_argument('-s', '--std-dev-rate', default=2.0, type=float, help='The locus is tagged as unstable if the number of peaks is upper than models_avg_nb_peaks + std_dev_rate * models_std_dev_nb_peaks. [Default: %(default)s]')
     group_status = parser.add_argument_group('Sample consensus status')  # Sample status
-    group_status.add_argument('-c', '--consensus-method', default='ratio', choices=['count', 'majority', 'ratio'], help='Method used to determine the sample status from the loci status. Count: if the number of unstable is upper or equal than instability-count the sample will be unstable otherwise it will be stable ; Ratio: if the ratio of unstable/determined loci is upper or equal than instability-ratio the sample will be unstable otherwise it will be stable ; Majority: if the ratio of unstable/determined loci is upper than 0.5 the sample will be unstable, if it is lower than stable the sample will be stable. [Default: %(default)s]')
-    group_status.add_argument('-l', '--min-voting-loci', default=3, type=int, help='Minimum number of voting loci (stable + unstable) to determine the sample status. If the number of voting loci is lower than this value the status for the sample will be undetermined. [Default: %(default)s]')
-    group_status.add_argument('-i', '--instability-ratio', default=0.2, type=float, help='[Only with consensus-method = ratio] If the ratio unstable/(stable + unstable) is superior than this value the status of the sample will be unstable otherwise it will be stable. [Default: %(default)s]')
-    group_status.add_argument('-u', '--instability-count', default=3, type=int, help='[Only with consensus-method = count] If the number of unstable loci is upper or equal than this value the sample will be unstable otherwise it will be stable. [Default: %(default)s]')
+    group_status.add_argument('-l', '--min-voting-loci', default=0.5, type=float, help='Minimum number of voting loci (stable + unstable) to determine the sample status. If the number of voting loci is lower than this value the status for the sample will be undetermined. [Default: %(default)s]')
+    group_status.add_argument('-i', '--instability-ratio', default=0.2, type=float, help='If the ratio unstable/(stable + unstable) is superior than this value the status of the sample will be unstable otherwise it will be stable. [Default: %(default)s]')
     group_score = parser.add_argument_group('Sample prediction score')  # Sample score
-    group_score.add_argument('-w', '--undetermined-weight', default=0.5, type=float, help='The weight of the undetermined loci in sample score calculation. [Default: %(default)s]')
+    group_score.add_argument('-w', '--undetermined-weight', default=0, type=float, help='The weight of the undetermined loci in sample score calculation. [Default: %(default)s]')
     group_score.add_argument('-g', '--locus-weight-is-score', action='store_true', help='Use the prediction score of each locus as wheight of this locus in sample prediction score calculation. [Default: %(default)s]')
     group_input = parser.add_argument_group('Inputs')  # Inputs
     group_input.add_argument('-r', '--input-model', required=True, help='Path to the file containing the references samples used in learn step (format: MSIReport).')
@@ -140,11 +133,6 @@ if __name__ == "__main__":
     group_output = parser.add_argument_group('Outputs')  # Outputs
     group_output.add_argument('-o', '--output-report', required=True, help='The path to the output file (format: MSIReport).')
     args = parser.parse_args()
-
-    if args.consensus_method != "ratio" and args.instability_ratio != parser.get_default('instability_ratio'):
-        raise Exception('The parameter "instability-ratio" can only used with consensus-ratio set to "ratio".')
-    if args.consensus_method != "count" and args.instability_count != parser.get_default('instability_count'):
-        raise Exception('The parameter "instability-count" can only used with consensus-ratio set to "count".')
 
     # Logger
     logging.basicConfig(format='%(asctime)s -- [%(filename)s][pid:%(process)d][%(levelname)s] -- %(message)s')

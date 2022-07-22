@@ -130,6 +130,7 @@ cfg_clf_ct = cfg_clf_locus.get("count")
 microsatLenDistrib(
     in_alignments=aln_pattern,
     in_microsatellites=config.get("reference")["microsatellites"],
+    out_results="microsat/microsatLenDistrib/{sample}_microsatLenDistrib.json",
     params_keep_duplicates=cfg_clf_ct["keep_duplicates"],
     params_method_name=cfg_clf_locus["sklearn"]["classifier"],
     params_padding=cfg_clf_ct["padding"],
@@ -138,47 +139,69 @@ microsatLenDistrib(
 
 # Classify
 cfg_clf_spl = cfg_classifier.get("sample")
-consensus_method = cfg_clf_spl.get("consensus_method", "ratio")
-param_threshold = "params_instability_" + consensus_method
 cfg_clf_sklearn = cfg_clf_locus["sklearn"]
 if cfg_clf_sklearn.get("classifier_params") and not isinstanceof(cfg_clf_sklearn.get("classifier_params"), str):
     cfg_clf_sklearn["classifier_params"] = json.dumps(cfg_clf_sklearn.get("classifier_params"))
-microsatSklearnClassify(**{
-    "in_model": cfg_classifier["model"],
-    "out_report": "microsat/{sample}_sklearnClassif.json",
-    "params_classifier": cfg_clf_sklearn["classifier"],
-    "params_classifier_params": cfg_clf_sklearn["classifier_params"],
-    "params_consensus_method": consensus_method,
-    "params_data_method": cfg_clf_sklearn["classifier"],
-    param_threshold: cfg_clf_spl["instability_threshold"],
-    "params_locus_weight_is_score": cfg_clf_spl["locus_weight_is_score"],
-    "params_min_depth": cfg_clf_locus["min_support"],
-    "params_min_voting_loci": cfg_clf_spl["min_voting_loci"],
-    "params_random_seed": cfg_classifier["random_seed"],
-    "params_undetermined_weight": cfg_clf_spl["undetermined_weight"]
-})
+microsatSklearnClassify(
+    in_evaluated="microsat/microsatLenDistrib/{sample}_microsatLenDistrib.json",
+    in_model=cfg_classifier["model"],
+    out_report="microsat/sklearn/{sample}_classif.json",
+    params_classifier=cfg_clf_sklearn["classifier"],
+    params_classifier_params=cfg_clf_sklearn["classifier_params"],
+    params_data_method=cfg_clf_sklearn["classifier"],
+    param_instability_ratio=cfg_clf_spl["instability_threshold"],
+    params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
+    params_min_depth=cfg_clf_locus["min_support"],
+    params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
+    params_random_seed=cfg_classifier["random_seed"],
+    params_undetermined_weight=cfg_clf_spl["undetermined_weight"]
+)
 
 cfg_clf_msings = cfg_classifier["locus"]["msings"]
-microsatMsingsClassify(**{
-    "in_evaluated": "microsat/{sample}_sklearnClassif.json",
-    "in_model": cfg_classifier["model"],
-    "params_consensus_method": consensus_method,
-    "params_data_method": cfg_clf_sklearn["classifier"],
-    param_threshold: cfg_clf_spl["instability_threshold"],
-    "params_locus_weight_is_score": cfg_clf_spl["locus_weight_is_score"],
-    "params_min_depth": cfg_cls_locus["min_support"],
-    "params_min_voting_loci": cfg_clf_spl["min_voting_loci"],
-    "params_peak_height_cutoff": cfg_clf_msings["peak_height_cutoff"],
-    "params_std_dev_rate": cfg_clf_msings["std_dev_rate"],
-    "params_undetermined_weight": cfg_clf_spl["undetermined_weight"],
-    "params_keep_outputs": True
-})
+microsatMsingsClassify(
+    in_evaluated="microsat/microsatLenDistrib/{sample}_microsatLenDistrib.json",
+    in_model=cfg_classifier["model"],
+    out_report="microsat/msings/{sample}_classif.json",
+    params_data_method=cfg_clf_sklearn["classifier"],
+    params_instability_ratio=cfg_clf_spl["instability_threshold"],
+    params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
+    params_min_depth=cfg_cls_locus["min_support"],
+    params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
+    params_peak_height_cutoff=cfg_clf_msings["peak_height_cutoff"],
+    params_std_dev_rate=cfg_clf_msings["std_dev_rate"],
+    params_undetermined_weight=cfg_clf_spl["undetermined_weight"]
+)
+
+microsatMsisensorproProClassify(
+    in_alignments=in_alignments=aln_pattern,
+    in_microsatellites=config.get("reference")["microsatellites"]
+    in_model=cfg_classifier["model"],
+    in_sequences=config.get("reference")["sequences"],
+    out_baseline="microsat/msisensorpro/baseline.tsv",
+    out_report="microsat/msisensorpro/{sample}_classif.json",
+    params_instability_ratio=cfg_clf_spl["instability_threshold"],
+    params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
+    params_min_depth=cfg_cls_locus["min_support"],
+    params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
+    params_undetermined_weight=cfg_clf_spl["undetermined_weight"]
+)
+
+# Merge results
+mergeMSIReports(
+    in_reports=[
+        "microsat/msings/{sample}_classif.json",
+        "microsat/msisensorpro/{sample}_classif.json",
+        "microsat/sklearn/{sample}_classif.json"  # Must be after msings
+    ],
+    out_report="report/data/{sample}_stabilityStatus.json",
+    params_keep_outputs=True
+)
 
 # Analysis report
 wfReport(
     config.get("classifier")["model"],
     samples_names,
-    in_classification="microsat/{sample}_stabilityStatus.json",
+    in_classification="report/data/{sample}_stabilityStatus.json",
     params_classification_method_name=cfg_clf_sklearn["classifier"],
     params_data_method_name=cfg_clf_sklearn["classifier"]
 )
