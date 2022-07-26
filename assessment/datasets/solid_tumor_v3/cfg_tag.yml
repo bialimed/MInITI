@@ -6,7 +6,6 @@ classifier:
       stitch: ##STITCH_COUNT##
     min_support: ##MIN_SUPPORT##
     msings:
-      peak_height_cutoff: 0.05
       std_dev_rate: 2.0
     sklearn:
       classifier: ##CLASSIFIER##

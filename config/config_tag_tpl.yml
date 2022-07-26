@@ -6,7 +6,6 @@ classifier:
       stitch: false
     min_support: 100
     msings:
-      peak_height_cutoff: 0.05
       std_dev_rate: 2.0
     sklearn:
       classifier: SVC

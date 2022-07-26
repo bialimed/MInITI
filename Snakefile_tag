@@ -149,7 +149,6 @@ microsatSklearnClassify(
     params_classifier=cfg_clf_sklearn["classifier"],
     params_classifier_params=cfg_clf_sklearn["classifier_params"],
     params_data_method=cfg_clf_sklearn["classifier"],
-    param_instability_ratio=cfg_clf_spl["instability_threshold"],
     params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
     params_min_depth=cfg_clf_locus["min_support"],
     params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
@@ -167,18 +166,15 @@ microsatMsingsClassify(
     params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
     params_min_depth=cfg_cls_locus["min_support"],
     params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
-    params_peak_height_cutoff=cfg_clf_msings["peak_height_cutoff"],
     params_std_dev_rate=cfg_clf_msings["std_dev_rate"],
     params_undetermined_weight=cfg_clf_spl["undetermined_weight"]
 )
 
 microsatMsisensorproProClassify(
-    in_alignments=in_alignments=aln_pattern,
-    in_microsatellites=config.get("reference")["microsatellites"]
+    in_evaluated="microsat/microsatLenDistrib/{sample}_microsatLenDistrib.json",
     in_model=cfg_classifier["model"],
-    in_sequences=config.get("reference")["sequences"],
-    out_baseline="microsat/msisensorpro/baseline.tsv",
     out_report="microsat/msisensorpro/{sample}_classif.json",
+    params_data_method=cfg_clf_sklearn["classifier"],
     params_instability_ratio=cfg_clf_spl["instability_threshold"],
     params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
     params_min_depth=cfg_cls_locus["min_support"],
@@ -191,7 +187,7 @@ mergeMSIReports(
     in_reports=[
         "microsat/msings/{sample}_classif.json",
         "microsat/msisensorpro/{sample}_classif.json",
-        "microsat/sklearn/{sample}_classif.json"  # Must be after msings
+        "microsat/sklearn/{sample}_classif.json"  # Must be after the last
     ],
     out_report="report/data/{sample}_stabilityStatus.json",
     params_keep_outputs=True

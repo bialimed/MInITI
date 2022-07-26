@@ -5,6 +5,8 @@ classifier:
       padding: ##PADDING##
       stitch: ##STITCH_COUNT##
     min_support: ##MIN_SUPPORT##
+    msings:
+      peak_height_cutoff: 0.05
 input:
   R1_pattern:
   R2_pattern:

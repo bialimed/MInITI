@@ -131,11 +131,13 @@ microsatStatusToAnnot(
     params_locus_id=False
 )
 microsatCreateModel(
+    in_length_distributions=expand("microsat/{sample}_microsatLenDistrib.json", sample=samples_names),
     in_loci_status="microsat/modelStatus.tsv",
     in_microsatellites=config.get("reference")["microsatellites"],
-    in_length_distributions=expand("microsat/{sample}_microsatLenDistrib.json", sample=samples_names),
+    in_reference_seq=config.get("reference")["sequences"],
     out_model="microsat/microsatModel.json",
     params_min_support=config.get("classifier")["locus"]["min_support"],
+    params_peak_height_cutoff=config.get("classifier")["locus"]["msings"]["peak_height_cutoff"],
     params_keep_outputs=True
 )
 

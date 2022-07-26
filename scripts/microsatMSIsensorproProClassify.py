@@ -9,13 +9,11 @@ __status__ = 'prod'
 
 from anacore.msi.base import Status
 from anacore.msi.locus import LocusRes
-from anacore.msi.msings import MSINGSEval
 from anacore.msi.reportIO import ReportIO
+from anacore.msisensorpro import ProEval
 import argparse
 import logging
-from numpy import average, std
 import os
-from scipy.stats import norm
 import sys
 
 
@@ -28,29 +26,26 @@ def getModelBaseline(locus_models):
     baseline = {
         "scores": {Status.stable: [], Status.unstable: []},
         "threshold": None,
-        "peak_height_cutoff": None
+        "ref_len": None
     }
     for curr_ref in locus_models:
         if "model" in curr_ref.results:
-            baseline["peak_height_cutoff"] = curr_ref.results["model"].data["mSINGS"]["peak_height_cutoff"]
+            baseline["ref_len"] = curr_ref.results["model"].data["MSIsensor-pro"]["ref_len"]
             curr_status = curr_ref.results["model"].status
             if curr_status in {Status.stable, Status.unstable}:
                 baseline["scores"][curr_status].append(
-                    curr_ref.results["model"].data["mSINGS"]["nb_peaks"]
+                    curr_ref.results["model"].data["MSIsensor-pro"]["pro_p"]
                 )
-    baseline["threshold"] = MSINGSEval.getThresholdFromNbPeaks(baseline["scores"][Status.stable])
+    baseline["threshold"] = ProEval.getThresholdFromScores(baseline["scores"][Status.stable])
     return baseline
 
 
-def getScore(nb_peaks, stable_nb_peaks, status):
-    score = norm.cdf(nb_peaks, loc=avg(stable_nb_peaks), scale=std(stable_nb_peaks)
-    if status == Status.unstable:
-        score = 1 - score
-    return score
+def getScore(nb_peaks, models_peaks, status):
+    pass
 
 
-def getStatus(nb_peaks, baseline_locus):
-    if nb_peaks >= baseline_locus["threshold"]:
+def getStatus(pro_p, baseline_locus):
+    if pro_p >= baseline_locus["threshold"]:
         status = Status.unstable
     else:
         status = Status.stable
@@ -67,8 +62,7 @@ def process(args):
             # Model
             if locus.position not in model_baseline:
                 model_baseline[locus.position] = getModelBaseline(
-                    [curr_model.loci[locus.position] for curr_model in models if locus.position in curr_model.loci],
-                    args.peak_height_cutoff
+                    [curr_model.loci[locus.position] for curr_model in models if locus.position in curr_model.loci]
                 )
             baseline_locus = model_baseline[locus.position]
             # Classify
@@ -77,9 +71,12 @@ def process(args):
                 locus_data = {"lengths": locus_data["lengths"]}
             locus_res = LocusRes(Status.undetermined, None, locus_data)
             if locus_data["lengths"].getCount() >= args.min_depth:
-                locus_data["nb_peaks"] = MSINGSEval.getNbPeaks(locus_data["lengths"], baseline_locus["peak_height_cutoff"])
-                locus_res.status = getStatus(locus_data["nb_peaks"], baseline_locus["scores"][Status.stable], args.std_dev_rate)
-                locus_res.score = getScore(locus_data["nb_peaks"], baseline_locus, locus_res.status)
+                locus_data["pro_p"], locus_data["pro_q"] = ProEval.getSlippageScores(
+                    baseline_locus["ref_len"],
+                    locus_data["lengths"]
+                )
+                locus_res.status = getStatus(locus_data["pro_p"], baseline_locus)
+                ##########locus_res.score = getScore(locus_data["pro_p"], models_locus, locus_res.status)
             locus.results[args.status_method] = locus_res
         # Classify sample
         curr_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
@@ -94,13 +91,12 @@ def process(args):
 #
 ########################################################################
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using mSINGS v4.0 like algorithm.')
-    parser.add_argument('--data-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
-    parser.add_argument('--status-method', default="mSINGSUp", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using MSIsensor-pro pro v1.2.0 like algorithm.')
+    parser.add_argument('--data-method', default="MSIsensor-pro pro", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--status-method', default="MSIsensor-pro pro", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
     group_locus.add_argument('-m', '--min-depth', default=60, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')
-    group_locus.add_argument('-s', '--std-dev-rate', default=2.0, type=float, help='The locus is tagged as unstable if the number of peaks is upper than models_avg_nb_peaks + std_dev_rate * models_std_dev_nb_peaks. [Default: %(default)s]')
     group_status = parser.add_argument_group('Sample consensus status')  # Sample status
     group_status.add_argument('-i', '--instability-ratio', default=0.2, type=float, help='If the ratio unstable/(stable + unstable) is superior than this value the status of the sample will be unstable otherwise it will be stable. [Default: %(default)s]')
     group_status.add_argument('-l', '--min-voting-loci', default=0.5, type=float, help='Minimum number of voting loci (stable + unstable) to determine the sample status. If the number of voting loci is lower than this value the status for the sample will be undetermined. [Default: %(default)s]')

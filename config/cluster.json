@@ -41,6 +41,12 @@
       vmem: "5G",
       threads: 1
   },
+  microsatMSIsensorproProClassify: {
+      queue: "normal",
+      mem: "5G",
+      vmem: "5G",
+      threads: 1
+  },
   microsatSklearnClassify: {
       queue: "normal",
       mem: "10G",
@@ -48,24 +54,6 @@
       threads: 1
   },
   microsatStatusToAnnot: {
-      queue: "normal",
-      mem: "3G",
-      vmem: "3G",
-      threads: 1
-  },
-  modelToBaseline: {
-      queue: "normal",
-      mem: "3G",
-      vmem: "3G",
-      threads: 1
-  },
-  msisensorpro_pro: {
-      queue: "normal",
-      mem: "6G",
-      vmem: "6G",
-      threads: 1      
-  },
-  msisensorproProToreport: {
       queue: "normal",
       mem: "3G",
       vmem: "3G",

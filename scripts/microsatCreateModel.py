@@ -3,15 +3,18 @@
 __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2018 IUCT-O'
 __license__ = 'GNU General Public License'
-__version__ = '1.2.1'
+__version__ = '2.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-from anacore.bed import BEDIO
+from anacore.bed import BEDIO, getAreas
 from anacore.msi.annot import addLociResToSpl, getLocusAnnotDict, MSIAnnot
 from anacore.msi.base import Status
-from anacore.msi.locus import Locus
+from anacore.msi.locus import getRefSeqInfo, Locus
+from anacore.msi.msings import MSINGSEval
+from anacore.msi.msisensorpro import ProEval
 from anacore.msi.reportIO import ReportIO
+from anacore.sequenceIO import IdxFastaIO
 import argparse
 from copy import deepcopy
 import logging
@@ -24,6 +27,56 @@ import sys
 # FUNCTIONS
 #
 ########################################################################
+def addMSINGSInfo(msi_samples, result_id, peak_height_cutoff):
+    """
+    Add {"mSINGS": {"nb_peaks": *, "peak_height_cutoff": *}} from mSINGS in loci results.
+
+    :param msi_samples: MSI samples.
+    :type msi_samples: list of anacore.msi.sample.MSISample
+    :param result_id: Name of the method used to store model data.
+    :type result_id: str
+    :param peak_height_cutoff: Minimum height to consider a peak in size distribution as rate of the highest peak.
+    :type peak_height_cutoff: float
+    """
+    for curr_spl in msi_samples:
+        for locus_id, locus in curr_spl.loci.items():
+            locus_data = locus.results[result_id].data
+            locus_data["mSINGS"] = {
+                "nb_peaks": MSINGSEval.getNbPeaks(locus_data["lengths"], peak_height_cutoff),
+                "peak_height_cutoff": peak_height_cutoff
+            }
+
+
+def addMSIsensorInfo(msi_samples, result_id, in_ref, in_targets):
+    """
+    Add {"MSIsensor-pro": {"nb_pro_ppeaks": *, "pro_q": *, "ref_len": *}} from MSIsensor-pro in loci results.
+
+    :param msi_samples: MSI samples.
+    :type msi_samples: list of anacore.msi.sample.MSISample
+    :param result_id: Name of the method used to store model data.
+    :type result_id: str
+    :param in_ref: Path to the reference sequences file (format: fasta with index).
+    :type in_ref: str
+    :param in_targets: Path to file containing locations of the microsatellite of interest (format: BED).
+    :type in_targets: str
+    """
+    len_by_locus = {}
+    with IdxFastaIO(in_ref) as ref_fh:
+        for target in getAreas(in_targets):
+            info = getRefSeqInfo(ref_fh, target)
+            locus_id = "{}:{}".format(target.reference.name, target.start - 1)
+            len_by_locus[locus_id] = info["repeat_times"] * len(info["repeat_unit_bases"])
+    for curr_spl in msi_samples:
+        for locus_id, locus in curr_spl.loci.items():
+            locus_data = locus.results[result_id].data
+            pro_p, pro_q = ProEval.getSlippageScores(locus_data["lengths"], len_by_locus[locus_id])
+            locus_data["MSIsensor-pro"] = {
+                "pro_p": pro_p,
+                "pro_q": pro_q,
+                "ref_len": len_by_locus[locus_id]
+            }
+
+
 def getAggregatedSpl(in_reports):
     """
     Return one list of MSISample from several MSReport.
@@ -39,6 +92,94 @@ def getAggregatedSpl(in_reports):
         for curr_spl in msi_samples:
             aggregated_spl.append(curr_spl)
     return aggregated_spl
+
+
+def populateLoci(msi_samples, ref_loci):
+    """
+    Add loci if they are missing in sample.
+
+    :param msi_samples: The samples to populate.
+    :type msi_samples: list of MSI samples
+    :param ref_loci: The loci to add if they are missing in samples.
+    :type ref_loci: str
+    """
+    for spl in msi_samples:
+        for ref_locus in ref_loci:
+            if ref_locus.position not in spl.loci:
+                spl.addLocus(deepcopy(ref_locus))
+
+
+def process(args):
+    """
+    Create training data for MSI classifiers. These references are stored in
+    MSIReport format.
+
+    :param args: The namespace extracted from the script arguments.
+    :type args: Namespace
+    """
+    # Get method name from annotations file
+    method_names = set()
+    for record in MSIAnnot(args.input_loci_status):
+        method_names.add(record["method_id"])
+    if len(method_names) != 1:
+        raise ValueError('The annotation file must contain only one value for method_id. The file "{}" contains {}.'.format(args.input_length_distributions, method_names))
+    result_id = list(method_names)[0]
+    # Get reference loci from targets file
+    ref_loci = []
+    with BEDIO(args.input_microsatellites) as FH_in:
+        for record in FH_in:
+            ref_loci.append(
+                Locus(
+                    "{}:{}-{}".format(record.chrom, record.start - 1, record.end),
+                    record.name
+                )
+            )
+    # Aggregate samples
+    msi_samples = getAggregatedSpl(args.inputs_length_distributions)
+    # Add locus result info
+    data_by_spl = getLocusAnnotDict(args.input_loci_status)
+    for curr_spl in msi_samples:
+        addLociResToSpl(curr_spl, data_by_spl[curr_spl.name])
+    # Filter locus results
+    populateLoci(msi_samples, ref_loci)
+    pruneResults(msi_samples, result_id, args.min_support)
+    # Add classifiers data
+    addMSINGSInfo(msi_samples, result_id, args.peak_height_cutoff)
+    addMSIsensorInfo(msi_samples, result_id, args.input_reference_sequences, args.input_microsatellites)
+    # Display metrics
+    writeStatusMetrics(msi_samples, result_id, args.output_info)
+    # Write output
+    ReportIO.write(msi_samples, args.output_model)
+
+
+def pruneResults(msi_samples, result_id, min_support):
+    """
+    Remove LocusRes where the status is not determined (none or undetermined)
+    and/or where the number of fragment used to determine status is lower than
+    min_support.
+
+    :param msi_samples: The pruned samples.
+    :type msi_samples: list of MSISample
+    :param result_id: The method on which the filters are applied.
+    :type result_id: str
+    :param min_support: The minimum number of support to keep a LocusRes in data.
+    :type min_support: int
+    """
+    removed_spl_idx = list()
+    for spl_idx, spl in enumerate(msi_samples):
+        nb_results = 0
+        for locus_id, msi_locus in spl.loci.items():
+            if result_id in msi_locus.results:
+                if msi_locus.results[result_id].status not in [Status.stable, Status.unstable]:
+                    msi_locus.delResult(result_id)
+                elif msi_locus.results[result_id].data["lengths"].getCount() < min_support:
+                    msi_locus.delResult(result_id)
+                else:
+                    nb_results += 1
+        if nb_results == 0:
+            removed_spl_idx.append(spl_idx)
+    for spl_idx in sorted(removed_spl_idx)[::-1]:
+        del(msi_samples[spl_idx])
 
 
 def writeStatusMetrics(msi_samples, result_id, out_summary):
@@ -87,91 +228,6 @@ def writeStatusMetrics(msi_samples, result_id, out_summary):
             )
 
 
-def populateLoci(msi_samples, ref_loci):
-    """
-    Add loci if they are missing in sample.
-
-    :param msi_samples: The samples to populate.
-    :type msi_samples: list of MSI samples
-    :param ref_loci: The loci to add if they are missing in samples.
-    :type ref_loci: str
-    """
-    for spl in msi_samples:
-        for ref_locus in ref_loci:
-            if ref_locus.position not in spl.loci:
-                spl.addLocus(deepcopy(ref_locus))
-
-
-def pruneResults(msi_samples, result_id, min_support):
-    """
-    Remove LocusRes where the status is not determined (none or undetermined)
-    and/or where the number of fragment used to determine status is lower than
-    min_support.
-
-    :param msi_samples: The pruned samples.
-    :type msi_samples: list of MSISample
-    :param result_id: The method on which the filters are applied.
-    :type result_id: str
-    :param min_support: The minimum number of support to keep a LocusRes in data.
-    :type min_support: int
-    """
-    removed_spl_idx = list()
-    for spl_idx, spl in enumerate(msi_samples):
-        nb_results = 0
-        for locus_id, msi_locus in spl.loci.items():
-            if result_id in msi_locus.results:
-                if msi_locus.results[result_id].status not in [Status.stable, Status.unstable]:
-                    msi_locus.delResult(result_id)
-                elif msi_locus.results[result_id].data["lengths"].getCount() < min_support:
-                    msi_locus.delResult(result_id)
-                else:
-                    nb_results += 1
-        if nb_results == 0:
-            removed_spl_idx.append(spl_idx)
-    for spl_idx in sorted(removed_spl_idx)[::-1]:
-        del(msi_samples[spl_idx])
-
-
-def process(args):
-    """
-    Create training data for MSI classifiers. These references are stored in
-    MSIReport format.
-
-    :param args: The namespace extracted from the script arguments.
-    :type args: Namespace
-    """
-    # Get method name from annotations file
-    method_names = set()
-    for record in MSIAnnot(args.input_loci_status):
-        method_names.add(record["method_id"])
-    if len(method_names) != 1:
-        raise ValueError('The annotation file must contain only one value for method_id. The file "{}" contains {}.'.format(args.input_length_distributions, method_names))
-    result_id = list(method_names)[0]
-    # Get reference loci from targets file
-    ref_loci = []
-    with BEDIO(args.input_microsatellites) as FH_in:
-        for record in FH_in:
-            ref_loci.append(
-                Locus(
-                    "{}:{}-{}".format(record.chrom, record.start - 1, record.end),
-                    record.name
-                )
-            )
-    # Aggregate samples
-    msi_samples = getAggregatedSpl(args.inputs_length_distributions)
-    # Add locus result info
-    data_by_spl = getLocusAnnotDict(args.input_loci_status)
-    for curr_spl in msi_samples:
-        addLociResToSpl(curr_spl, data_by_spl[curr_spl.name])
-    # Filter locus results
-    populateLoci(msi_samples, ref_loci)
-    pruneResults(msi_samples, result_id, args.min_support)
-    # Display metrics
-    writeStatusMetrics(msi_samples, result_id, args.output_info)
-    # Write output
-    ReportIO.write(msi_samples, args.output_model)
-
-
 ########################################################################
 #
 # MAIN
@@ -180,12 +236,14 @@ def process(args):
 if __name__ == "__main__":
     # Manage parameters
     parser = argparse.ArgumentParser(description='Create training data for MSI classifiers. These references are stored in MSIReport format. All the loci are represented in all samples but all the loci does not have a result (if the data does not fit filters criteria).')
+    parser.add_argument('-p', '--peak-height-cutoff', default=0.05, type=float, help='[mSINGS] Minimum height to consider a peak in size distribution as rate of the highest peak. [Default: %(default)s]')
     parser.add_argument('-s', '--min-support', type=int, default=200, help='Minimum number of reads/fragments in size distribution to keep the result. The distribution must contains a sufficient amount of data to be representative of length distribution profile for the current locus. [Default: %(default)s]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_input = parser.add_argument_group('Inputs')  # Inputs
     group_input.add_argument('-d', '--inputs-length-distributions', required=True, nargs='+', help='Path(es) to the file(s) evaluated in references creation process (format: MSIReport).')
     group_input.add_argument('-l', '--input-loci-status', required=True, help='Path to the file containing for each sample for each targeted locus the stability status (format: MSIAnnot). First line must be: sample<tab>locus_position<tab>method_id<tab>key<tab>value<tab>type. The method_id should be "model" and an example of line content is: H2291-1_S15<tab>4:55598140-55598290<tab>model<tab>status<tab>MSS<tab>str.')
-    group_input.add_argument('-t', '--input-microsatellites', required=True, help='The locations of the microsatellite of interest (format: BED).')
+    group_input.add_argument('-t', '--input-microsatellites', required=True, help='Path to file containing locations of the microsatellite of interest (format: BED).')
+    group_input.add_argument('-r', '--input-reference-sequences', required=True, help='[MSIsensor] Path to the reference sequences file (format: fasta with index).')
     group_output = parser.add_argument_group('Outputs')  # Outputs
     group_output.add_argument('-i', '--output-info', required=True, help='The path to the file describing the number of references by status for each locus (format: TSV).')
     group_output.add_argument('-m', '--output-model', required=True, help='The path to the file containing the references distribution for each locus (format: MSIReport).')
