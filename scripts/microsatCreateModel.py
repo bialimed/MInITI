@@ -7,14 +7,13 @@ __version__ = '2.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
 __status__ = 'prod'
 
-from anacore.bed import BEDIO, getAreas
+from anacore.bed import BEDIO
 from anacore.msi.annot import addLociResToSpl, getLocusAnnotDict, MSIAnnot
 from anacore.msi.base import Status
-from anacore.msi.locus import getRefSeqInfo, Locus
+from anacore.msi.locus import Locus
 from anacore.msi.msings import MSINGSEval
 from anacore.msi.msisensorpro import ProEval
 from anacore.msi.reportIO import ReportIO
-from anacore.sequenceIO import IdxFastaIO
 import argparse
 from copy import deepcopy
 import logging
@@ -40,41 +39,32 @@ def addMSINGSInfo(msi_samples, result_id, peak_height_cutoff):
     """
     for curr_spl in msi_samples:
         for locus_id, locus in curr_spl.loci.items():
-            locus_data = locus.results[result_id].data
-            locus_data["mSINGS"] = {
-                "nb_peaks": MSINGSEval.getNbPeaks(locus_data["lengths"], peak_height_cutoff),
-                "peak_height_cutoff": peak_height_cutoff
-            }
+            if result_id in locus.results:
+                locus_data = locus.results[result_id].data
+                locus_data["mSINGS"] = {
+                    "nb_peaks": MSINGSEval.getNbPeaks(locus_data["lengths"], peak_height_cutoff),
+                    "peak_height_cutoff": peak_height_cutoff
+                }
 
 
-def addMSIsensorInfo(msi_samples, result_id, in_ref, in_targets):
+def addMSIsensorInfo(msi_samples, result_id):
     """
-    Add {"MSIsensor-pro": {"nb_pro_ppeaks": *, "pro_q": *, "ref_len": *}} from MSIsensor-pro in loci results.
+    Add {"MSIsensor-pro": {"pro_p": *, "pro_q": *}} from MSIsensor-pro in loci results.
 
     :param msi_samples: MSI samples.
     :type msi_samples: list of anacore.msi.sample.MSISample
     :param result_id: Name of the method used to store model data.
     :type result_id: str
-    :param in_ref: Path to the reference sequences file (format: fasta with index).
-    :type in_ref: str
-    :param in_targets: Path to file containing locations of the microsatellite of interest (format: BED).
-    :type in_targets: str
     """
-    len_by_locus = {}
-    with IdxFastaIO(in_ref) as ref_fh:
-        for target in getAreas(in_targets):
-            info = getRefSeqInfo(ref_fh, target)
-            locus_id = "{}:{}".format(target.reference.name, target.start - 1)
-            len_by_locus[locus_id] = info["repeat_times"] * len(info["repeat_unit_bases"])
     for curr_spl in msi_samples:
         for locus_id, locus in curr_spl.loci.items():
-            locus_data = locus.results[result_id].data
-            pro_p, pro_q = ProEval.getSlippageScores(locus_data["lengths"], len_by_locus[locus_id])
-            locus_data["MSIsensor-pro"] = {
-                "pro_p": pro_p,
-                "pro_q": pro_q,
-                "ref_len": len_by_locus[locus_id]
-            }
+            if result_id in locus.results:
+                locus_data = locus.results[result_id].data
+                pro_p, pro_q = ProEval.getSlippageScores(locus_data["lengths"], locus.end - locus.start + 1)
+                locus_data["MSIsensor-pro"] = {
+                    "pro_p": pro_p,
+                    "pro_q": pro_q
+                }
 
 
 def getAggregatedSpl(in_reports):
@@ -145,7 +135,7 @@ def process(args):
     pruneResults(msi_samples, result_id, args.min_support)
     # Add classifiers data
     addMSINGSInfo(msi_samples, result_id, args.peak_height_cutoff)
-    addMSIsensorInfo(msi_samples, result_id, args.input_reference_sequences, args.input_microsatellites)
+    addMSIsensorInfo(msi_samples, result_id)
     # Display metrics
     writeStatusMetrics(msi_samples, result_id, args.output_info)
     # Write output
@@ -243,7 +233,6 @@ if __name__ == "__main__":
     group_input.add_argument('-d', '--inputs-length-distributions', required=True, nargs='+', help='Path(es) to the file(s) evaluated in references creation process (format: MSIReport).')
     group_input.add_argument('-l', '--input-loci-status', required=True, help='Path to the file containing for each sample for each targeted locus the stability status (format: MSIAnnot). First line must be: sample<tab>locus_position<tab>method_id<tab>key<tab>value<tab>type. The method_id should be "model" and an example of line content is: H2291-1_S15<tab>4:55598140-55598290<tab>model<tab>status<tab>MSS<tab>str.')
     group_input.add_argument('-t', '--input-microsatellites', required=True, help='Path to file containing locations of the microsatellite of interest (format: BED).')
-    group_input.add_argument('-r', '--input-reference-sequences', required=True, help='[MSIsensor] Path to the reference sequences file (format: fasta with index).')
     group_output = parser.add_argument_group('Outputs')  # Outputs
     group_output.add_argument('-i', '--output-info', required=True, help='The path to the file describing the number of references by status for each locus (format: TSV).')
     group_output.add_argument('-m', '--output-model', required=True, help='The path to the file containing the references distribution for each locus (format: MSIReport).')

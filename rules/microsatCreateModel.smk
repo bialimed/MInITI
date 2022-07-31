@@ -8,7 +8,6 @@ def microsatCreateModel(
         in_length_distributions,  # ["microsat/spl1_microsatLenDistrib.json", "microsat/spl2_microsatLenDistrib.json"]
         in_loci_status="raw/status.tsv",
         in_microsatellites="design/microsat.bed",
-        in_reference_seq="data/reference.fa",
         out_info="microsat/microsatModel_info.tsv",
         out_model="microsat/microsatModel.json",
         out_stderr="logs/microsatCreateModel_stderr.txt",
@@ -21,8 +20,7 @@ def microsatCreateModel(
         input:
             length_distributions = in_length_distributions,
             loci_status = in_loci_status,
-            microsatellites = in_microsatellites,
-            reference_sequences = in_reference_seq
+            microsatellites = in_microsatellites
         output:
             info = out_info if params_keep_outputs else temp(out_info),
             model = out_model if params_keep_outputs else temp(out_model)
@@ -42,7 +40,6 @@ def microsatCreateModel(
             " --inputs-length-distributions {input.length_distributions}"
             " --input-loci-status {input.loci_status}"
             " --input-microsatellites {input.microsatellites}"
-            " --input-reference_sequences {input.reference_sequences}"
             " --output-info {output.info}"
             " --output-model {output.model}"
             " {params.stderr_redirection} {log}"
