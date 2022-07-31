@@ -25,12 +25,10 @@ import sys
 def getModelBaseline(locus_models):
     baseline = {
         "scores": {Status.stable: [], Status.unstable: []},
-        "threshold": None,
-        "ref_len": None
+        "threshold": None
     }
     for curr_ref in locus_models:
         if "model" in curr_ref.results:
-            baseline["ref_len"] = curr_ref.results["model"].data["MSIsensor-pro"]["ref_len"]
             curr_status = curr_ref.results["model"].status
             if curr_status in {Status.stable, Status.unstable}:
                 baseline["scores"][curr_status].append(
@@ -72,7 +70,7 @@ def process(args):
             locus_res = LocusRes(Status.undetermined, None, locus_data)
             if locus_data["lengths"].getCount() >= args.min_depth:
                 locus_data["pro_p"], locus_data["pro_q"] = ProEval.getSlippageScores(
-                    baseline_locus["ref_len"],
+                    locus.length,
                     locus_data["lengths"]
                 )
                 locus_res.status = getStatus(locus_data["pro_p"], baseline_locus)
@@ -92,8 +90,8 @@ def process(args):
 ########################################################################
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Predict stability classes and scores for loci and samples using MSIsensor-pro pro v1.2.0 like algorithm.')
-    parser.add_argument('--data-method', default="MSIsensor-pro pro", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
-    parser.add_argument('--status-method', default="MSIsensor-pro pro", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--data-method', default="MSIsensor-pro_pro", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
+    parser.add_argument('--status-method', default="MSIsensor-pro_pro", help='The name of the method storing locus metrics and where the status will be set. [Default: %(default)s]')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_locus = parser.add_argument_group('Locus classifier')  # Locus status
     group_locus.add_argument('-m', '--min-depth', default=60, type=int, help='The minimum numbers of reads or fragments to determine the status. [Default: %(default)s]')

@@ -55,6 +55,6 @@ if __name__ == "__main__":
         args.min_voting_ratio,
         args.min_depth
     )
-    spl.setScore("MSIsensor-pro pro", args.undetermined_weight, args.locus_weight_is_score)
+    spl.setScore("MSIsensor-pro_pro", args.undetermined_weight, args.locus_weight_is_score)
     ReportIO.write([spl], args.output_report)
     log.info("End of job")
