@@ -8,7 +8,7 @@ classifier:
     msings:
       std_dev_rate: 2.0
     sklearn:
-      classifier: SVC
+      classifier: RandomForest:50
       classifier_params:
   model:  # learn/microsat/microsatModel.json
   random_seed: 0
