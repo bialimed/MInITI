@@ -508,6 +508,20 @@ if __name__ == "__main__":
                                     "mSINGSUp"
                                 )
                             )
+                            res_df_rows.extend(
+                                getMethodResInfo(
+                                    dataset_id,
+                                    "MSIsensor-pro_pro",
+                                    padding,
+                                    min_support,
+                                    stitching,
+                                    duplicates,
+                                    loci_id_by_name,
+                                    reports,
+                                    status_by_spl,
+                                    "MSIsensor-pro_pro"
+                                )
+                            )
                         with open(args.results_path, out_mode) as FH_out:
                             res_df = pd.DataFrame.from_records(res_df_rows, columns=getResInfoTitles(loci_id_by_name))
                             res_df.to_csv(FH_out, header=use_header, sep='\t')
