@@ -207,7 +207,7 @@ def getMethodResInfo(dataset_id, clf_name, padding, min_support, stitching, dupl
         row = [
             dataset_id,
             curr_report.name,  # sample name
-            "clf={}, pad={} min_supp={}, sitch={}, dup={}".format(clf_name, padding, min_support, stitching, duplicates),
+            "clf={}, pad={}, min_supp={}, sitch={}, dup={}".format(clf_name, padding, min_support, stitching, duplicates),
             clf_name,
             padding,
             min_support,
