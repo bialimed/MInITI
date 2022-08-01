@@ -166,7 +166,7 @@ def getResInfoTitles(loci_id_by_name):
         "lib_name",
         "config",
         "classifier",
-        "padding"
+        "padding",
         "min_support",
         "stitching",
         "duplicates",
