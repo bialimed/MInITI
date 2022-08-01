@@ -34,8 +34,8 @@ def process(args, log):
         curr_loci = spl.loci.keys()
         if final_loci != curr_loci:
             raise Exception("Samples from report {} does not contain the same loci.".format(args.inputs_reports[0]))
-    final_spl = {spl.name for spl in final_report}
-    for curr_report in args.inputs_reports[1:]:
+    for curr_report_path in args.inputs_reports[1:]:
+        curr_report = ReportIO.parse(curr_report_path)
         for final_spl, curr_spl in zip(final_report, curr_report):
             if final_spl.name != curr_spl.name:
                 raise Exception("Reports from {} does not contain the same samples.".format(args.inputs_reports))
@@ -49,7 +49,7 @@ def process(args, log):
                 final_spl.results[method] = res
             # Loci results
             for locus_id, locus in curr_spl.loci.items():
-                for method, res in locus.results:
+                for method, res in locus.results.items():
                     final_spl.loci[locus_id].results[method] = res
     # Write
     ReportIO.write(final_report, args.output_report)

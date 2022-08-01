@@ -24,7 +24,7 @@ import sys
 # FUNCTIONS
 #
 ########################################################################
-def getModelBaseline(locus_models):
+def getModelBaseline(locus_models, std_dev_rate):
     baseline = {
         "scores": {Status.stable: [], Status.unstable: []},
         "threshold": None,
@@ -38,12 +38,19 @@ def getModelBaseline(locus_models):
                 baseline["scores"][curr_status].append(
                     curr_ref.results["model"].data["mSINGS"]["nb_peaks"]
                 )
-    baseline["threshold"] = MSINGSEval.getThresholdFromNbPeaks(baseline["scores"][Status.stable])
+    baseline["threshold"] = MSINGSEval.getThresholdFromNbPeaks(
+        baseline["scores"][Status.stable],
+        std_dev_rate
+    )
     return baseline
 
 
-def getScore(nb_peaks, stable_nb_peaks, status):
-    score = norm.cdf(nb_peaks, loc=avg(stable_nb_peaks), scale=std(stable_nb_peaks)
+def getScore(nb_peaks, baseline_locus, status):
+    score = norm.cdf(
+        nb_peaks,
+        loc=average(baseline_locus["scores"][Status.stable]),
+        scale=std(baseline_locus["scores"][Status.stable])
+    )
     if status == Status.unstable:
         score = 1 - score
     return score
@@ -68,7 +75,7 @@ def process(args):
             if locus.position not in model_baseline:
                 model_baseline[locus.position] = getModelBaseline(
                     [curr_model.loci[locus.position] for curr_model in models if locus.position in curr_model.loci],
-                    args.peak_height_cutoff
+                    args.std_dev_rate
                 )
             baseline_locus = model_baseline[locus.position]
             # Classify
@@ -78,7 +85,7 @@ def process(args):
             locus_res = LocusRes(Status.undetermined, None, locus_data)
             if locus_data["lengths"].getCount() >= args.min_depth:
                 locus_data["nb_peaks"] = MSINGSEval.getNbPeaks(locus_data["lengths"], baseline_locus["peak_height_cutoff"])
-                locus_res.status = getStatus(locus_data["nb_peaks"], baseline_locus["scores"][Status.stable], args.std_dev_rate)
+                locus_res.status = getStatus(locus_data["nb_peaks"], baseline_locus)
                 locus_res.score = getScore(locus_data["nb_peaks"], baseline_locus, locus_res.status)
             locus.results[args.status_method] = locus_res
         # Classify sample

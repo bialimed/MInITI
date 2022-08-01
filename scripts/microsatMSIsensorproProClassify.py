@@ -10,7 +10,7 @@ __status__ = 'prod'
 from anacore.msi.base import Status
 from anacore.msi.locus import LocusRes
 from anacore.msi.reportIO import ReportIO
-from anacore.msisensorpro import ProEval
+from anacore.msi.msisensorpro import ProEval
 import argparse
 import logging
 import os
@@ -70,8 +70,8 @@ def process(args):
             locus_res = LocusRes(Status.undetermined, None, locus_data)
             if locus_data["lengths"].getCount() >= args.min_depth:
                 locus_data["pro_p"], locus_data["pro_q"] = ProEval.getSlippageScores(
-                    locus.length,
-                    locus_data["lengths"]
+                    locus_data["lengths"],
+                    locus.length
                 )
                 locus_res.status = getStatus(locus_data["pro_p"], baseline_locus)
                 ##########locus_res.score = getScore(locus_data["pro_p"], models_locus, locus_res.status)

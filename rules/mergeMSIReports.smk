@@ -6,7 +6,7 @@ __version__ = '1.0.0'
 
 def mergeMSIReports(
         in_reports,
-        out_reports="microsat/{sample}_statusClassify.json",
+        out_report="microsat/{sample}_statusClassify.json",
         out_stderr="logs/{sample}_mergeMSIReports_stderr.txt",
         params_keep_outputs=False,
         params_stderr_append=False):
@@ -15,7 +15,7 @@ def mergeMSIReports(
         input:
             in_reports
         output:
-            out_reports if params_keep_outputs else temp(out_reports)
+            out_report if params_keep_outputs else temp(out_report)
         log:
             out_stderr
         params:
@@ -25,6 +25,6 @@ def mergeMSIReports(
             "envs/anacore-utils.yml"
         shell:
             "{params.bin_path}"
-            " --input-reports {input}"
-            " --output-reports {output}"
+            " --inputs-reports {input}"
+            " --output-report {output}"
             " {params.stderr_redirection} {log}"

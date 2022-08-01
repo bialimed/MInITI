@@ -34,7 +34,6 @@ def microsatMsingsClassify(
             locus_weight_is_score = "" if params_locus_weight_is_score is None else "--locus-weight-is-score",
             min_depth = "" if params_min_depth is None else "--min-depth {}".format(params_min_depth),
             min_voting_loci = "" if params_min_voting_loci is None else "--min-voting-loci {}".format(params_min_voting_loci),
-            peak_height_cutoff = "" if params_peak_height_cutoff is None else "--peak-height-cutoff {}".format(params_peak_height_cutoff),
             status_method = "" if params_status_method is None else "--status-method {}".format(params_status_method),
             std_dev_rate = "" if params_std_dev_rate is None else "--std-dev-rate {}".format(params_std_dev_rate),
             stderr_redirection = "2>" if not params_stderr_append else "2>>",
@@ -46,7 +45,6 @@ def microsatMsingsClassify(
             " {params.data_method}"
             " {params.locus_weight_is_score}"
             " {params.min_depth}"
-            " {params.peak_height_cutoff}"
             " {params.status_method}"
             " {params.std_dev_rate}"
             " {params.undetermined_weight}"
