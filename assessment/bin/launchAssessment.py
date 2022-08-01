@@ -340,7 +340,7 @@ def getMSISamples(in_folder, samples):
     """
     samples_res = list()
     for spl_name in samples:
-        filepath = os.path.join(in_folder, "microsat", spl_name + "_stabilityStatus.json")
+        filepath = os.path.join(in_folder, "report", "data", spl_name + "_stabilityStatus.json")
         samples_res.append(ReportIO.parse(filepath)[0])
     return samples_res
 
