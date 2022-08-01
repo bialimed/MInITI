@@ -23,6 +23,14 @@ import sys
 #
 ########################################################################
 def getModelBaseline(locus_models):
+    """
+    Return pro_p scores for stable and unstable samples in model and the instability threshold.
+
+    :param locus_models: Selected locus for each samples in model.
+    :type locus_models: list of Locus
+    :return: Pro_p scores for stable and unstable samples in model and the instability threshold.
+    :rtype: dict
+    """
     baseline = {
         "scores": {Status.stable: [], Status.unstable: []},
         "threshold": None
@@ -38,11 +46,33 @@ def getModelBaseline(locus_models):
     return baseline
 
 
-def getScore(nb_peaks, models_peaks, status):
+def getScore(pro_p, baseline_locus, status):
+    """
+    Return prediction confidence score.
+
+    :param pro_p: Pro_p score for locus in sample.
+    :type pro_p: float
+    :param baseline_locus: Pro_p scores for stable and unstable samples in model and the instability threshold.
+    :type baseline_locus: dict
+    :param status: Predicted status for locus.
+    :type status: anacore.msi.base.Status
+    :return: Prediction confidence score.
+    :rtype: dict
+    """
     pass
 
 
 def getStatus(pro_p, baseline_locus):
+    """
+    Return predicted status.
+
+    :param pro_p: Pro_p score for locus in sample.
+    :type pro_p: float
+    :param baseline_locus: Pro_p scores for stable and unstable samples in model and the instability threshold.
+    :type baseline_locus: dict
+    :return: Predicted status.
+    :rtype: anacore.msi.base.Status
+    """
     if pro_p >= baseline_locus["threshold"]:
         status = Status.unstable
     else:
@@ -51,6 +81,12 @@ def getStatus(pro_p, baseline_locus):
 
 
 def process(args):
+    """
+    Predict stability classes and scores for loci and samples using MSIsensor-pro pro v1.2.0 like algorithm.
+
+    :param args: The namespace extracted from the script arguments.
+    :type args: Namespace
+    """
     eval_list = ReportIO.parse(args.input_evaluated)
     # Classify loci
     models = ReportIO.parse(args.input_model)
@@ -116,5 +152,4 @@ if __name__ == "__main__":
 
     # Process
     process(args)
-
     log.info("End of job")
