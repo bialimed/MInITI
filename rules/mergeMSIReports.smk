@@ -10,7 +10,7 @@ def mergeMSIReports(
         out_stderr="logs/{sample}_mergeMSIReports_stderr.txt",
         params_keep_outputs=False,
         params_stderr_append=False):
-    """Merge several MSI ReportIO on same samples and loci."""
+    """Merge multiple MSI ReportIO from the same samples and loci."""
     rule mergeMSIReports:
         input:
             in_reports

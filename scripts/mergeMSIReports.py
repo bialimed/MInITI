@@ -21,7 +21,7 @@ import sys
 ########################################################################
 def process(args, log):
     """
-    Merge several MSI ReportIO on same samples and loci.
+    Merge multiple MSI ReportIO from the same samples and loci.
 
     :param args: The namespace extracted from the script arguments.
     :type args: Namespace
@@ -62,7 +62,7 @@ def process(args, log):
 ########################################################################
 if __name__ == "__main__":
     # Manage parameters
-    parser = argparse.ArgumentParser(description='Merge several MSI ReportIO on same samples and loci.')
+    parser = argparse.ArgumentParser(description='Merge multiple MSI ReportIO from the same samples and loci. This is used to merge results from multiple classifiers.')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_input = parser.add_argument_group('Inputs')  # Inputs
     group_input.add_argument('-i', '--inputs-reports', required=True, nargs='+', help='Path to MSI report files (format: JSON).')
