@@ -164,7 +164,7 @@ microsatMsingsClassify(
     params_data_method=cfg_clf_sklearn["classifier"],
     params_instability_ratio=cfg_clf_spl["instability_threshold"],
     params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
-    params_min_depth=cfg_cls_locus["min_support"],
+    params_min_depth=cfg_clf_locus["min_support"],
     params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
     params_std_dev_rate=cfg_clf_msings["std_dev_rate"],
     params_undetermined_weight=cfg_clf_spl["undetermined_weight"]
@@ -177,7 +177,7 @@ microsatMsisensorproProClassify(
     params_data_method=cfg_clf_sklearn["classifier"],
     params_instability_ratio=cfg_clf_spl["instability_threshold"],
     params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
-    params_min_depth=cfg_cls_locus["min_support"],
+    params_min_depth=cfg_clf_locus["min_support"],
     params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
     params_undetermined_weight=cfg_clf_spl["undetermined_weight"]
 )
