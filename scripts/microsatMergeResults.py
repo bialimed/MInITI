@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'Frederic Escudie'
-__copyright__ = 'Copyright (C) 2022 CHU-Toulouse'
+__copyright__ = 'Copyright (C) 2022 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
@@ -21,7 +21,7 @@ import sys
 ########################################################################
 def process(args, log):
     """
-    Merge multiple MSI ReportIO from the same samples and loci.
+    Merge multiple MSI ReportIO from the same samples and same loci.
 
     :param args: The namespace extracted from the script arguments.
     :type args: Namespace
@@ -62,7 +62,7 @@ def process(args, log):
 ########################################################################
 if __name__ == "__main__":
     # Manage parameters
-    parser = argparse.ArgumentParser(description='Merge multiple MSI ReportIO from the same samples and loci. This is used to merge results from multiple classifiers.')
+    parser = argparse.ArgumentParser(description='Merge multiple MSI ReportIO from the same samples and same loci. This is used to merge results from multiple classifiers.')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_input = parser.add_argument_group('Inputs')  # Inputs
     group_input.add_argument('-i', '--inputs-reports', required=True, nargs='+', help='Path to MSI report files (format: JSON).')

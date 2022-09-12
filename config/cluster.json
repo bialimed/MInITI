@@ -17,7 +17,7 @@
       vmem: "18G",
       threads: 1
   },
-  mergeMSIReports: {
+  microsatMergeResults: {
       queue: "normal",
       mem: "3G",
       vmem: "3G",

@@ -140,7 +140,7 @@ microsatLenDistrib(
 # Classify
 cfg_clf_spl = cfg_classifier.get("sample")
 cfg_clf_sklearn = cfg_clf_locus["sklearn"]
-if cfg_clf_sklearn.get("classifier_params") and not isinstanceof(cfg_clf_sklearn.get("classifier_params"), str):
+if cfg_clf_sklearn.get("classifier_params") and not isinstance(cfg_clf_sklearn.get("classifier_params"), str):
     cfg_clf_sklearn["classifier_params"] = json.dumps(cfg_clf_sklearn.get("classifier_params"))
 microsatSklearnClassify(
     in_evaluated="microsat/microsatLenDistrib/{sample}_microsatLenDistrib.json",
@@ -183,7 +183,7 @@ microsatMsisensorproProClassify(
 )
 
 # Merge results
-mergeMSIReports(
+microsatMergeResults(
     in_reports=[
         "microsat/msings/{sample}_classif.json",
         "microsat/msisensorpro/{sample}_classif.json",

@@ -4,14 +4,14 @@ __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
 
 
-def mergeMSIReports(
+def microsatMergeResults(
         in_reports,
         out_report="microsat/{sample}_statusClassify.json",
-        out_stderr="logs/{sample}_mergeMSIReports_stderr.txt",
+        out_stderr="logs/{sample}_microsatMergeResults_stderr.txt",
         params_keep_outputs=False,
         params_stderr_append=False):
     """Merge multiple MSI ReportIO from the same samples and loci."""
-    rule mergeMSIReports:
+    rule microsatMergeResults:
         input:
             in_reports
         output:
@@ -19,7 +19,7 @@ def mergeMSIReports(
         log:
             out_stderr
         params:
-            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/mergeMSIReports.py")),
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatMergeResults.py")),
             stderr_redirection = "2>" if not params_stderr_append else "2>>",
         conda:
             "envs/anacore-utils.yml"
