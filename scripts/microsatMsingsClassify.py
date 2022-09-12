@@ -13,9 +13,8 @@ from anacore.msi.msings import MSINGSEval
 from anacore.msi.reportIO import ReportIO
 import argparse
 import logging
-from numpy import average, std
 import os
-from scipy.stats import norm
+from sklearn.naive_bayes import GaussianNB
 import sys
 
 
@@ -68,14 +67,15 @@ def getScore(nb_peaks, baseline_locus, status):
     :return: Prediction confidence score.
     :rtype: dict
     """
-    score = norm.cdf(
-        nb_peaks,
-        loc=average(baseline_locus["scores"][Status.stable]),
-        scale=std(baseline_locus["scores"][Status.stable])
-    )
-    if status == Status.unstable:
-        score = 1 - score
-    return score
+    scores = [[score] for score in baseline_locus["scores"][Status.stable]]
+    scores += [[score] for score in baseline_locus["scores"][Status.unstable]]
+    labels = [Status.stable for score in baseline_locus["scores"][Status.stable]]
+    labels += [Status.unstable for score in baseline_locus["scores"][Status.unstable]]
+    clf = GaussianNB()
+    clf.fit(scores, labels)
+    spl_proba = clf.predict_proba([[nb_peaks]])[0]
+    idx_by_cls = {cls: idx for idx, cls in enumerate(clf.classes_)}
+    return spl_proba[idx_by_cls[status]]
 
 
 def getStatus(nb_peaks, baseline_locus):
@@ -124,7 +124,10 @@ def process(args):
             if locus_data["lengths"].getCount() >= args.min_depth:
                 locus_data["nb_peaks"] = MSINGSEval.getNbPeaks(locus_data["lengths"], baseline_locus["peak_height_cutoff"])
                 locus_res.status = getStatus(locus_data["nb_peaks"], baseline_locus)
-                locus_res.score = getScore(locus_data["nb_peaks"], baseline_locus, locus_res.status)
+                locus_res.score = round(
+                    getScore(locus_data["nb_peaks"], baseline_locus, locus_res.status),
+                    6
+                )
             locus.results[args.status_method] = locus_res
         # Classify sample
         curr_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)

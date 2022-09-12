@@ -14,6 +14,7 @@ from anacore.msi.msisensorpro import ProEval
 import argparse
 import logging
 import os
+from sklearn.naive_bayes import GaussianNB
 import sys
 
 
@@ -59,7 +60,15 @@ def getScore(pro_p, baseline_locus, status):
     :return: Prediction confidence score.
     :rtype: dict
     """
-    pass
+    scores = [[score] for score in baseline_locus["scores"][Status.stable]]
+    scores += [[score] for score in baseline_locus["scores"][Status.unstable]]
+    labels = [Status.stable for score in baseline_locus["scores"][Status.stable]]
+    labels += [Status.unstable for score in baseline_locus["scores"][Status.unstable]]
+    clf = GaussianNB()
+    clf.fit(scores, labels)
+    spl_proba = clf.predict_proba([[pro_p]])[0]
+    idx_by_cls = {cls: idx for idx, cls in enumerate(clf.classes_)}
+    return spl_proba[idx_by_cls[status]]
 
 
 def getStatus(pro_p, baseline_locus):
@@ -110,7 +119,10 @@ def process(args):
                     locus.length
                 )
                 locus_res.status = getStatus(locus_data["pro_p"], baseline_locus)
-                ##########locus_res.score = getScore(locus_data["pro_p"], models_locus, locus_res.status)
+                locus_res.score = round(
+                    getScore(locus_data["pro_p"], baseline_locus, locus_res.status),
+                    6
+                )
             locus.results[args.status_method] = locus_res
         # Classify sample
         curr_spl.setStatusByInstabilityRatio(args.status_method, args.min_voting_loci, args.instability_ratio)
