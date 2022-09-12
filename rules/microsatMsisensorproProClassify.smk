@@ -40,7 +40,7 @@ def microsatMsisensorproProClassify(
             stderr_redirection = "2>" if not params_stderr_append else "2>>",
             undetermined_weight = "" if params_undetermined_weight is None else "--undetermined-weight {}".format(params_undetermined_weight)
         conda:
-            "envs/anacore-utils.yml"
+            "envs/anacore-sklearn.yml"
         shell:
             "{params.bin_path}"
             " {params.data_method}"
