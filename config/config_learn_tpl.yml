@@ -1,10 +1,10 @@
 classifier:
   locus:
     count:
-      keep_duplicates: false
+      keep_duplicates: true
       padding: 2
       stitch: false
-    min_support: 100
+    min_support: 70
     msings:
       peak_height_cutoff: 0.05
 input:
