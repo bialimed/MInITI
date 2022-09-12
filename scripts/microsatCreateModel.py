@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 __author__ = 'Frederic Escudie'
-__copyright__ = 'Copyright (C) 2018 IUCT-O'
+__copyright__ = 'Copyright (C) 2018 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '2.0.0'
 __email__ = 'escudie.frederic@iuct-oncopole.fr'
@@ -26,40 +26,40 @@ import sys
 # FUNCTIONS
 #
 ########################################################################
-def addMSINGSInfo(msi_samples, result_id, peak_height_cutoff):
+def addMSINGSInfo(msi_samples, result_name, peak_height_cutoff):
     """
-    Add {"mSINGS": {"nb_peaks": *, "peak_height_cutoff": *}} from mSINGS in loci results.
+    Add {"nb_peaks": ..., "peak_height_cutoff": ...} from mSINGS in loci results.
 
     :param msi_samples: MSI samples.
     :type msi_samples: list of anacore.msi.sample.MSISample
-    :param result_id: Name of the method used to store model data.
-    :type result_id: str
-    :param peak_height_cutoff: Minimum height to consider a peak in size distribution as rate of the highest peak.
+    :param result_name: Name of the method used to store model data.
+    :type result_name: str
+    :param peak_height_cutoff: Minimum rate of the highest peak to consider a peak in size distribution.
     :type peak_height_cutoff: float
     """
     for curr_spl in msi_samples:
         for locus_id, locus in curr_spl.loci.items():
-            if result_id in locus.results:
-                locus_data = locus.results[result_id].data
+            if result_name in locus.results:
+                locus_data = locus.results[result_name].data
                 locus_data["mSINGS"] = {
                     "nb_peaks": MSINGSEval.getNbPeaks(locus_data["lengths"], peak_height_cutoff),
                     "peak_height_cutoff": peak_height_cutoff
                 }
 
 
-def addMSIsensorInfo(msi_samples, result_id):
+def addMSIsensorInfo(msi_samples, result_name):
     """
-    Add {"MSIsensor-pro": {"pro_p": *, "pro_q": *}} from MSIsensor-pro in loci results.
+    Add {"pro_p": ..., "pro_q": ...}} from MSIsensor-pro in loci results.
 
     :param msi_samples: MSI samples.
     :type msi_samples: list of anacore.msi.sample.MSISample
-    :param result_id: Name of the method used to store model data.
-    :type result_id: str
+    :param result_name: Name of the method used to store model data.
+    :type result_name: str
     """
     for curr_spl in msi_samples:
         for locus_id, locus in curr_spl.loci.items():
-            if result_id in locus.results:
-                locus_data = locus.results[result_id].data
+            if result_name in locus.results:
+                locus_data = locus.results[result_name].data
                 pro_p, pro_q = ProEval.getSlippageScores(locus_data["lengths"], locus.end - locus.start + 1)
                 locus_data["MSIsensor-pro"] = {
                     "pro_p": pro_p,
@@ -72,7 +72,7 @@ def getAggregatedSpl(in_reports):
     Return one list of MSISample from several MSReport.
 
     :param in_reports: Pathes to the MSIReport files.
-    :type in_reports: list of MSIReport
+    :type in_reports: list
     :return: List of MSISample.
     :rtype: list
     """
