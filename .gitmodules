@@ -1,0 +1,3 @@
+[submodule "lib/AnaCore-snakemake"]
+	path = lib/AnaCore-snakemake
+	url = git@github.com:bialimed/AnaCore-snakemake.git

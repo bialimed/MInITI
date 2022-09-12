@@ -17,25 +17,38 @@ Use one of the following:
 `https://bitbucket.org/fescudie/miniti/downloads/?tab=tags`.
 * [developper way] Clones the repository from the latest unreleased version:
 
-      git clone https://bitbucket.org/fescudie/miniti.git
+      git clone --recurse-submodules https://bitbucket.org/fescudie/miniti.git
 
 ### 2. Install dependencies
 * conda (>=4.6.8):
 
+      # Install conda
       wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh && \
       sh Miniconda3-latest-Linux-x86_64.sh
+
+      # Install mamba
+      conda activate base
+      conda install -c conda-forge mamba
 
   More details on miniconda install [here](https://docs.conda.io/en/latest/miniconda.html).
 
 * snakemake (>=5.4.2):
 
-      conda install snakemake
+      mamba create -c conda-forge -c bioconda -n miniti snakemake
+      conda activate miniti
+      pip install drmaa
 
   More details on snakemake install [here](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html).
 
-The others dependencies (cutadapt, bwa, ...) will be automatically installed by
-snakemake at the first execution. This first execution required an access to
-internet.
+* Install rules dependencies (bwa, ...):
+
+  conda activate miniti
+  snakemake \
+    --use-conda \
+    --conda-prefix ${application_env_dir} \
+    --conda-create-envs-only
+    --snakefile ${APP_DIR}/Snakefile \
+    --configfile workflow_parameters.yml
 
 ### 4. Download and prepare resources
 TODO
