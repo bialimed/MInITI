@@ -1,0 +1,27 @@
+classifier:
+  locus:
+    count:
+      keep_duplicates: true
+      padding: 2
+      stitch: false
+    min_support: 70
+    msings:
+      std_dev_rate: 2.0
+    sklearn:
+      classifier: RandomForest:50
+      classifier_params:
+  model: config/microsat_model.json
+  random_seed: 0
+  sample:
+    instability_threshold: 0.33
+    locus_weight_is_score: false
+    min_voting_loci: 0.8
+    undetermined_weight: 0
+input:
+  aln_pattern:
+  excluded_samples: [Undetermined]
+  R1_pattern: raw/{sample}_R1.fastq.gz
+  R2_pattern: raw/{sample}_R2.fastq.gz
+reference:
+  microsatellites: config/microsat_targets.bed
+  sequences: ##${GENOME_HG38}##
