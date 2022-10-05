@@ -4,7 +4,7 @@
 
 ## Table of Contents
 * [Description](#description)
-* [Workflow steps](#workflow-steps)
+* [Workflows steps](#workflows-steps)
 * [Installation](#installation)
 * [Usage](#usage)
 * [Performances](#performances)
@@ -19,15 +19,40 @@ Sample classification is based on comparison with a learning model creating from
 a panel of stable and unstable. As consequence, it does not need a normal tissue
 for evaluated sample and the application come with two workflows: learn and tag.
 
-`Learn` produces the learning model form a list of samples, their known classification and the list of MSI targets. It must be run on data coming from your laboratory process and the resulting model should be used to classify data generated using the same protocols.
+`Learn` produces the learning model from a list of samples, their known classification and the list of MSI targets. It must be run on data coming from your laboratory process and the resulting model should be used to classify data generated using the same protocols.
 
-`Tag` classifies loci and samples, produces confidence score for these classifications and writes an interactive report. Three classifiers are used in this workflow:
+`Tag` classifies loci and samples, produces confidence score for these classifications and writes an interactive report.
+
+## Workflows steps
+### 1. MInITI learn
+<figure>
+    <img src="doc/img/wf/MInITI_learn.png" />
+    <figcaption align = "center"><b>Fig.1 - Learn steps</b></figcaption>
+</figure>
+
+The `learn` workflow produces the learning model from a list of samples, their known classification and the list of MSI targets. It can be run only once for your panel. The model created will be one of the input of all run of the MInITI tag on the same panel with the same laboratory protocol.
+
+Workflow (see Fig.1):
+* If you start from the FastQ, firsts steps are the alignment of reads and the duplicates marking.
+* Then, the distribution of reads lengths for each locus is retrieve.
+* Finally, features will be used in classifiers decision (MInITI tag) are calculated. Lengths distributions, classifiers features and status of each loci are then stored in the model file.
+
+### 2. MInITI tag
+<figure>
+    <img src="doc/img/wf/MInITI_tag.png" />
+    <figcaption align = "center"><b>Fig.2 - Tag steps</b></figcaption>
+</figure>
+
+The `tag` workflow classifies loci and samples, produces confidence score for these classifications and writes an interactive report.
+
+Workflow (see Fig.2):
+* If you start from the FastQ, firsts steps are the alignment of reads and the duplicates marking.
+* Then, the distribution of reads lengths for each locus is retrieve.
+* This distribution is used by three independant classifiers to tag loci by comparison to model. Then the sample class is inferred by instability ratio on these loci. The classifiers used on loci are:
  * An [mSINGS](https://bitbucket.org/uwlabmed/msings/src/master/) reimplementation,
  * An [MSISensor-pro](https://github.com/xjtu-omics/msisensor-pro) pro algorithm's reimplementation,
  * A classifier from [sklearn](https://scikit-learn.org/stable/) (default: random forest)
-
-## Workflow steps
-...................................................
+* Finally, results from all classifiers are merged and a report is produced.
 
 ## Installation
 ### 1. Download code
@@ -153,20 +178,20 @@ The main elements of the output directory are the following:
 information about sample in computer readable format defined by
 [AnaCore](https://github.com/bialimed/AnaCore) library.
 
-`${out_dir}/report/${sample}.html` (see Fig.1) is an interactive report
+`${out_dir}/report/${sample}.html` (see Fig.3) is an interactive report
 to inspect:
  * Sample classification and confidence score from all classifiers.
- * Loci sequencing depths, distribution lengths profile (see Fig.2), classifications and
+ * Loci sequencing depths, distribution lengths profile (see Fig.4), classifications and
  confidence score from all classifiers.
 doc/img/example_res.png
 
 <figure>
-<img src="doc/img/report_example.png" />
-<figcaption align = "center"><b>Fig.1 - Sample report</b></figcaption>
+    <img src="doc/img/report_example.png" />
+    <figcaption align = "center"><b>Fig.3 - Sample report</b></figcaption>
 </figure>
 <figure>
-<img src="doc/img/report_example_distrib.png" />
-<figcaption align = "center"><b>Fig.2 - Lengths distribution panel</b></figcaption>
+    <img src="doc/img/report_example_distrib.png" />
+    <figcaption align = "center"><b>Fig.4 - Lengths distribution panel</b></figcaption>
 </figure>
 
 ## Performances
