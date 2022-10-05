@@ -10,15 +10,6 @@ import json
 from time import strftime, gmtime
 import re
 
-################################################### dev
-app_dir = os.path.dirname(workflow.snakefile)
-lib_dir = os.path.join(app_dir, "ext", "anacore")
-sys.path.insert(0, lib_dir)
-if os.getenv('PYTHONPATH') is None:
-    os.environ['PYTHONPATH'] = lib_dir
-else:
-    os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + os.pathsep + lib_dir
-###################################################
 
 ########################################################################
 #
