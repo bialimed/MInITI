@@ -1,0 +1,18 @@
+classifier:
+  locus:
+    count:
+      keep_duplicates: true
+      padding: 2
+      stitch: false
+    min_support: 70
+    msings:
+      peak_height_cutoff: 0.05
+input:
+  R1_pattern: raw/{sample}_R1.fastq.gz
+  R2_pattern: raw/{sample}_R2.fastq.gz
+  aln_pattern:
+  excluded_samples: [Undetermined]
+  known_status: config/known_status.tsv
+reference:
+  microsatellites: config/microsat_targets.bed
+  sequences: ##${GENOME_HG38}##

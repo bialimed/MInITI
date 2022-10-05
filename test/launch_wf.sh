@@ -19,10 +19,10 @@ test_dir=`dirname $0`
 test_dir=`realpath ${test_dir}`
 application_dir=`dirname ${test_dir}`
 
-# Process
-mkdir -p ${work_dir} && \
-cp -r ${application_dir}/test/raw ${work_dir}/raw && \
-cp -r ${application_dir}/test/config ${work_dir}/config && \
+# Process learn
+mkdir -p ${work_dir}/learn && \
+cp -r ${application_dir}/test/raw ${work_dir}/learn/raw && \
+cp -r ${application_dir}/test/config ${work_dir}/learn/config && \
 snakemake \
   --use-conda \
   --conda-prefix ${conda_envs_dir} \
@@ -31,14 +31,39 @@ snakemake \
   --latency-wait 200 \
   --cluster-config ${application_dir}/config/cluster.json \
   --drmaa "${DRMAA_params}" \
-  --snakefile ${application_dir}/Snakefile \
-  --configfile ${work_dir}/config/wf_config.yml \
-  --directory ${work_dir} \
-  2> ${work_dir}/wf_stderr.txt
+  --snakefile ${application_dir}/Snakefile_learn \
+  --configfile ${work_dir}/learn/config/wf_learn_config.yml \
+  --directory ${work_dir}/learn \
+  2> ${work_dir}/learn/wf_stderr.txt
+
+  # Check execution
+  if [ $? -ne 0 ]; then
+      echo -e "[\033[0;31mERROR\033[0m] Workflow execution error (log: ${work_dir}/learn/wf_stderr.txt)"
+      exit 1
+  fi
+
+# Process tag
+mkdir -p ${work_dir}/tag && \
+cp -r ${application_dir}/test/raw ${work_dir}/tag/raw && \
+cp -r ${application_dir}/test/config ${work_dir}/tag/config && \
+snakemake \
+  --use-conda \
+  --conda-prefix ${conda_envs_dir} \
+  --jobs ${nb_threads} \
+  --jobname "miniti.{rule}.{jobid}" \
+  --latency-wait 200 \
+  --cluster-config ${application_dir}/config/cluster.json \
+  --drmaa "${DRMAA_params}" \
+  --snakefile ${application_dir}/Snakefile_tag \
+  --configfile ${work_dir}/tag/config/wf_tag_config.yml \
+  --directory ${work_dir}/tag \
+  2> ${work_dir}/tag/wf_stderr.txt
 
 # Check execution
 if [ $? -ne 0 ]; then
-    echo -e "[\033[0;31mERROR\033[0m] Workflow execution error (log: ${work_dir}/wf_stderr.txt)"
+    echo -e "[\033[0;31mERROR\033[0m] Workflow execution error (log: ${work_dir}/tag/wf_stderr.txt)"
     exit 1
 fi
+
+# End of test
 echo "Workflow execution success"
