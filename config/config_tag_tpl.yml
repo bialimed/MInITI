@@ -8,8 +8,8 @@ classifier:
     msings:
       std_dev_rate: 2.0
     sklearn:
-      classifier: RandomForest:50
-      classifier_params:
+      classifier: RandomForest
+      classifier_params: {"n_estimators": 50}
   model:  # learn/microsat/microsatModel.json
   random_seed: 0
   sample:
