@@ -48,6 +48,8 @@ def wfReport(
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/wfSplReport.py")),
             data_method_name = "" if params_data_method_name is None else "--data-method-name {}".format(params_data_method_name),
             sample = " --sample-name {sample}"
+        conda:
+            "envs/anacore-utils.yml"
         shell:
             "{params.bin_path}"
             " {params.sample}"
@@ -67,6 +69,8 @@ def wfReport(
         params:
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/wfRunReport.py")),
             classification_method_name = "" if params_classification_method_name is None else "--classification-method-name {}".format(params_classification_method_name)
+        conda:
+            "envs/anacore-utils.yml"
         shell:
             "{params.bin_path}"
             " {params.classification_method_name}"
