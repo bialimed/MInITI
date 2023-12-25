@@ -29,7 +29,7 @@ snakemake \
   --jobs ${nb_threads} \
   --jobname "miniti.{rule}.{jobid}" \
   --latency-wait 200 \
-  --cluster ${cluster_submission} \
+  --cluster "${cluster_submission}" \
   --snakefile ${application_dir}/Snakefile_learn \
   --configfile ${work_dir}/learn/config/wf_learn_config.yml \
   --directory ${work_dir}/learn \
@@ -51,7 +51,7 @@ snakemake \
   --jobs ${nb_threads} \
   --jobname "miniti.{rule}.{jobid}" \
   --latency-wait 200 \
-  --cluster ${cluster_submission} \
+  --cluster "${cluster_submission}" \
   --snakefile ${application_dir}/Snakefile_tag \
   --configfile ${work_dir}/tag/config/wf_tag_config.yml \
   --directory ${work_dir}/tag \
