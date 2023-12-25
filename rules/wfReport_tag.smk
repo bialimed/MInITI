@@ -31,6 +31,10 @@ def wfReport(
             out_stderr_cpRsc
         params:
             report_dir = out_report_folder
+        resources:
+            mem = "1G",
+            partition = "normal"
+        threads: 1
         shell:
             "mkdir -p {params.report_dir} && cp -r {input} {output}"
             " 2> {log}"
@@ -48,6 +52,10 @@ def wfReport(
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/wfSplReport.py")),
             data_method_name = "" if params_data_method_name is None else "--data-method-name {}".format(params_data_method_name),
             sample = " --sample-name {sample}"
+        resources:
+            mem = "3G",
+            partition = "normal"
+        threads: 1
         conda:
             "envs/anacore-utils.yml"
         shell:
@@ -69,6 +77,10 @@ def wfReport(
         params:
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/wfRunReport.py")),
             classification_method_name = "" if params_classification_method_name is None else "--classification-method-name {}".format(params_classification_method_name)
+        resources:
+            mem = "2G",
+            partition = "normal"
+        threads: 1
         conda:
             "envs/anacore-utils.yml"
         shell:
