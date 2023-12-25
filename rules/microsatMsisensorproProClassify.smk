@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/microsatMsisensorproProClassify.smk
+../lib/snake-basket/rules/microsatMsisensorproProClassify.smk

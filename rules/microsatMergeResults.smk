@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/microsatMergeResults.smk
+../lib/snake-basket/rules/microsatMergeResults.smk

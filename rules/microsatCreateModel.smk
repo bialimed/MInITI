@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/microsatCreateModel.smk
+../lib/snake-basket/rules/microsatCreateModel.smk

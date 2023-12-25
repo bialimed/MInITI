@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/microsatStatusToAnnot.smk
+../lib/snake-basket/rules/microsatStatusToAnnot.smk

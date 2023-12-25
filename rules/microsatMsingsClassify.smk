@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/microsatMsingsClassify.smk
+../lib/snake-basket/rules/microsatMsingsClassify.smk

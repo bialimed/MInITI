@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/microsatLenDistrib.smk
+../lib/snake-basket/rules/microsatLenDistrib.smk

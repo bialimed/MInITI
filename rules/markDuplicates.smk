@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/markDuplicates.smk
+../lib/snake-basket/rules/markDuplicates.smk

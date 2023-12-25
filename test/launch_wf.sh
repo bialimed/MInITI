@@ -2,7 +2,7 @@
 
 # Parameters
 if [ "$#" -eq 0 ]; then
-    echo -e "[\033[0;31mERROR\033[0m] The working directory must be provided: $0 CONDA_ENVS_DIR WORK_DIR 'DRMAA_params'"
+    echo -e "[\033[0;31mERROR\033[0m] The working directory must be provided: $0 CONDA_ENVS_DIR WORK_DIR 'CLUSTER_SUBMISSION'"
     exit 1
 elif [ "$#" -ne 3 ] && [ "$#" -ne 4 ]; then
     echo -e "[\033[0;31mERROR\033[0m] Illegal number of parameters"
@@ -10,7 +10,7 @@ elif [ "$#" -ne 3 ] && [ "$#" -ne 4 ]; then
 fi
 conda_envs_dir=$1
 work_dir=$2
-DRMAA_params=$3
+cluster_submission=$3
 nb_threads=2
 if [ "$#" -eq 4 ]; then
     nb_threads=$4
@@ -29,8 +29,7 @@ snakemake \
   --jobs ${nb_threads} \
   --jobname "miniti.{rule}.{jobid}" \
   --latency-wait 200 \
-  --cluster-config ${application_dir}/config/cluster.json \
-  --drmaa "${DRMAA_params}" \
+  --cluster ${cluster_submission} \
   --snakefile ${application_dir}/Snakefile_learn \
   --configfile ${work_dir}/learn/config/wf_learn_config.yml \
   --directory ${work_dir}/learn \
@@ -52,8 +51,7 @@ snakemake \
   --jobs ${nb_threads} \
   --jobname "miniti.{rule}.{jobid}" \
   --latency-wait 200 \
-  --cluster-config ${application_dir}/config/cluster.json \
-  --drmaa "${DRMAA_params}" \
+  --cluster ${cluster_submission} \
   --snakefile ${application_dir}/Snakefile_tag \
   --configfile ${work_dir}/tag/config/wf_tag_config.yml \
   --directory ${work_dir}/tag \

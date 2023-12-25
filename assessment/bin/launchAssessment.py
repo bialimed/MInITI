@@ -4,8 +4,6 @@ __author__ = 'Frederic Escudie'
 __copyright__ = 'Copyright (C) 2018 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '2.1.0'
-__email__ = 'escudie.frederic@iuct-oncopole.fr'
-__status__ = 'prod'
 
 from anacore.bed import getAreas
 from anacore.msi.reportIO import ReportIO

@@ -24,4 +24,4 @@ input:
   R2_pattern:
 reference:
   microsatellites: targets.bed
-  sequences: /Anapath/bank/Homo_sapiens/DNA/GRCh38_Ensembl101/sequences/Homo_sapiens.GRCh38.ensembl_v101.dna.toplevel.chrOnly.fa
+  sequences: /labos/Anapath/bank/Homo_sapiens/DNA/GRCh38/sequences/Homo_sapiens.GRCh38.ensembl_v101.dna.toplevel.chrOnly.fa

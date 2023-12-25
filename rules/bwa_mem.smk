@@ -1,1 +1,1 @@
-../lib/AnaCore-snakemake/rules/bwa_mem.smk
+../lib/snake-basket/rules/bwa_mem.smk

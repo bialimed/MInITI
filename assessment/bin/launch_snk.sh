@@ -8,15 +8,14 @@ assessment_bin_dir=`realpath ${assessment_bin_dir}`
 assessment_dir=`dirname ${assessment_bin_dir}`
 application_dir=`dirname ${assessment_dir}`
 
-unset PYTHONPATH && export DRMAA_LIBRARY_PATH=$SGE_ROOT/lib/linux-rhel7-x64/libdrmaa.so && \
+unset PYTHONPATH && \
 source /Anapath/soft/conda/current/bin/activate miniti && \
 snakemake \
 --printshellcmds \
 --jobs 100 \
 --latency-wait 240 \
 --restart-times 2 \
---drmaa " -V -q normal -l h_vmem={cluster.vmem} -pe smp {cluster.threads} -l pri_normal=1" \
---cluster-config ${application_dir}/config/cluster.json \
+--cluster "sbatch --partition={resources.partition} --mem={resources.mem} --cpus-per-task={threads}" \
 --use-conda --conda-prefix /Anapath/soft/conda/current/envs \
 --snakefile ${application_dir}/$wf \
 --configfile $config \

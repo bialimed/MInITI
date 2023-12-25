@@ -93,9 +93,7 @@ Use one of the following:
 
 * snakemake (>=5.4.2):
 
-      mamba create -c conda-forge -c bioconda -n miniti snakemake
-      conda activate miniti
-      pip install drmaa
+      mamba create -c conda-forge -c bioconda -n miniti snakemake==6.15.0
 
   More details on snakemake install [here](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html).
 
@@ -121,17 +119,15 @@ Use one of the following:
       ${APP_DIR}/test/launch_wf.sh \
         ${CONDA_ENVS_DIR} \
         ${WORK_DIR} \
-        ${DRMAA_PARAMS}
+        ${CLUSTER_PARAMS}
 
   Example with scheduler slurm:
-
-      export DRMAA_LIBRARY_PATH=$SGE_ROOT/lib/linux-rhel7-x64/libdrmaa.so
 
       conda activate miniti
       ~/soft/miniti/test/launch_wf.sh \
         /work/$USER/conda_envs/envs \
         /work/$USER/test_miniti \
-        ' --partition={cluster.queue} --mem={cluster.mem} --cpus-per-task={cluster.threads}'
+        'sbatch --partition={resources.partition} --mem={resources.mem} --cpus-per-task={threads}'
 
 * See results in `${WORK_DIR}/tag/report/run.html`.
 
@@ -182,7 +178,7 @@ Details on each parameter can be found in config_learn_tpl.yml.
       --jobname "miniti.{rule}.{jobid}" \
       --latency-wait 100 \
       --snakefile ${application_dir}/Snakefile_learn \
-      --cluster-config ${application_dir}/config/cluster.json \
+      --cluster "sbatch --partition={resources.partition} --mem={resources.mem} --cpus-per-task={threads}" \
       --configfile workflow_parameters.yml \
       --directory ${out_dir} \
       > ${out_dir}/wf_log.txt \
@@ -233,7 +229,7 @@ Details on each parameter can be found in config_tag_tpl.yml.
       --jobname "miniti.{rule}.{jobid}" \
       --latency-wait 100 \
       --snakefile ${application_dir}/Snakefile_tag \
-      --cluster-config ${application_dir}/config/cluster.json \
+      --cluster "sbatch --partition={resources.partition} --mem={resources.mem} --cpus-per-task={threads}" \
       --configfile workflow_parameters.yml \
       --directory ${out_dir} \
       > ${out_dir}/wf_log.txt \
