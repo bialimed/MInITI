@@ -400,7 +400,7 @@ if __name__ == "__main__":
     group_score.add_argument('--locus-weight-is-score', action='store_true', help='[Used for all the classifiers different from MSINGS] Use the prediction score of each locus as wheight of this locus in sample prediction score calculation. [Default: %(default)s]')
     # Inputs
     group_input = parser.add_argument_group('Inputs')
-    group_input.add_argument('-d', '--data-folder', required=True, help="The folder containing data to process. It must aln/, targets.bed and status_annot.tsv.")
+    group_input.add_argument('-d', '--data-folder', required=True, help="The folder containing data to process. It must aln/, targets.bed and status.tsv.")
     group_input.add_argument('-w', '--work-folder', default=os.getcwd(), help="The working directory. [Default: %(default)s]")
     # Outputs
     group_output = parser.add_argument_group('Outputs')

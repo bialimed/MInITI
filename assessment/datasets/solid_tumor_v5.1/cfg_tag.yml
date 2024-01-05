@@ -1,0 +1,27 @@
+classifier:
+  locus:
+    count:
+      keep_duplicates: ##KEEP_DUPLICATES##
+      padding: ##PADDING##
+      stitch: ##STITCH_COUNT##
+    min_support: ##MIN_SUPPORT##
+    msings:
+      std_dev_rate: 2.0
+    sklearn:
+      classifier: ##CLASSIFIER##
+      classifier_params: ##CLASSIFIER_PARAMS##
+  model: ##MODEL_PATH##
+  random_seed: 0
+  sample:
+    instability_threshold: 0.3
+    locus_weight_is_score: false
+    min_voting_loci: 0.8
+    undetermined_weight: 0
+input:
+  aln_pattern: raw/{sample}.bam
+  excluded_samples: [Undetermined]
+  R1_pattern:
+  R2_pattern:
+reference:
+  microsatellites: targets.bed
+  sequences: /labos/Anapath/bank/Homo_sapiens/DNA/GRCh38/sequences/Homo_sapiens.GRCh38.ensembl_v101.dna.toplevel.chrOnly.fa
