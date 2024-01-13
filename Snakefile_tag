@@ -14,7 +14,8 @@ import re
 # Functions
 #
 ########################################################################
-def splFromPattern(pattern, excluded):
+def splFromPattern(pattern, excluded=None):
+    excluded = list() if excluded is None else excluded
     samples_pathes = glob.glob(pattern.replace("{sample}", "*"))
     samples_names = set()
     for spl in samples_pathes:
@@ -80,10 +81,9 @@ onerror:
 samples_names = None
 aln_pattern = config.get("input").get("aln_pattern")
 if aln_pattern is not None:
-    samples_names = splFromPattern(aln_pattern, config.get("input")["excluded_samples"])
+    samples_names = splFromPattern(aln_pattern, config.get("input").get("excluded_samples"))
 else:
-    samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input")["excluded_samples"])
-
+    samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input").get("excluded_samples"))
 
 ########################################################################
 #
