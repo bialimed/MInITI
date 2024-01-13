@@ -9,14 +9,17 @@ assessment_dir=`dirname ${assessment_bin_dir}`
 application_dir=`dirname ${assessment_dir}`
 
 unset PYTHONPATH && \
-source /Anapath/soft/conda/current/bin/activate miniti && \
+source /labos/Anapath/soft/conda/current/bin/activate miniti && \
 snakemake \
 --printshellcmds \
---jobs 100 \
+--jobs 40 \
+--jobname "miniti.eval.{rule}.{jobid}" \
 --latency-wait 240 \
---restart-times 2 \
---cluster "sbatch --partition={resources.partition} --mem={resources.mem} --cpus-per-task={threads}" \
---use-conda --conda-prefix /Anapath/soft/conda/current/envs \
+--restart-times 1 \
+--max-jobs-per-second 1 \
+--max-status-checks-per-second 1 \
+--cluster "sbatch --partition=normal --mem={resources.mem} --cpus-per-task={threads}" \
+--use-conda --conda-prefix /labos/Anapath/soft/conda/current/envs \
 --snakefile ${application_dir}/$wf \
 --configfile $config \
 --directory $out \
