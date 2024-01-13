@@ -5,7 +5,6 @@ __copyright__ = 'Copyright (C) 2018 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '3.1.0'
 
-from anacore.abstractFile import checksum
 from anacore.msi.base import LocusClassifier, Status
 from anacore.msi.locus import LocusRes
 from anacore.msi.reportIO import ReportIO
