@@ -96,6 +96,11 @@ rule all:
         expand("report/{sample}.html", sample=samples_names),
         "report/run.html"
 
+# Creates list of samples
+with open("sample_list.txt", "w") as handle:
+    for curr_spl in samples_names:
+        handle.write(curr_spl + "\n")
+
 # Alignment
 if aln_pattern is None:
     aln_pattern = "aln/{sample}.bam"
