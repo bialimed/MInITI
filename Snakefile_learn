@@ -85,9 +85,9 @@ rule all:
 samples_names = None
 aln_pattern = config.get("input").get("aln_pattern")
 if aln_pattern is not None:
-    samples_names = splFromPattern(aln_pattern, config.get("input")["excluded_samples"])
+    samples_names = splFromPattern(aln_pattern, config.get("input").get("excluded_samples", []))
 else:
-    samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input").get("excluded_samples"))
+    samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input").get("excluded_samples", []))
     aln_pattern = "aln/{sample}.bam"
     bwa_mem(
         in_reads=[config.get("input")["R1_pattern"], config.get("input")["R2_pattern"]],
