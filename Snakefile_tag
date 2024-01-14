@@ -142,6 +142,7 @@ microsatSklearnClassify(
     params_classifier=cfg_clf_sklearn["classifier"],
     params_classifier_params=cfg_clf_sklearn["classifier_params"],
     params_data_method=cfg_clf_sklearn["classifier"],
+    params_instability_ratio=cfg_clf_spl["instability_threshold"],
     params_locus_weight_is_score=cfg_clf_spl["locus_weight_is_score"],
     params_min_depth=cfg_clf_locus["min_support"],
     params_min_voting_loci=cfg_clf_spl["min_voting_loci"],
