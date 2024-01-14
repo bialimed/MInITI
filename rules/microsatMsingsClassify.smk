@@ -31,6 +31,7 @@ def microsatMsingsClassify(
         params:
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/microsatMsingsClassify.py")),
             data_method = "" if params_data_method is None else "--data-method {}".format(params_data_method),
+            instability_ratio = "" if params_instability_ratio is None else "--instability-ratio {}".format(params_instability_ratio),
             locus_weight_is_score = "" if params_locus_weight_is_score is None else "--locus-weight-is-score",
             min_depth = "" if params_min_depth is None else "--min-depth {}".format(params_min_depth),
             min_voting_loci = "" if params_min_voting_loci is None else "--min-voting-loci {}".format(params_min_voting_loci),
@@ -47,6 +48,7 @@ def microsatMsingsClassify(
         shell:
             "{params.bin_path}"
             " {params.data_method}"
+            " {params.instability_ratio}"
             " {params.locus_weight_is_score}"
             " {params.min_depth}"
             " {params.min_voting_loci}"
