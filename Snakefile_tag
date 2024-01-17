@@ -188,10 +188,15 @@ microsatMergeResults(
 )
 
 # Analysis report
+modelToStablesPeaks(
+    in_model=config.get("classifier")["model"],
+    out_stables_peaks="report/data/model_stablesPeaks.json",
+    params_keep_outputs=True
+)
 wfReport(
-    config.get("classifier")["model"],
     samples_names,
     in_classification="report/data/{sample}_stabilityStatus.json",
+    in_stables_peaks="report/data/model_stablesPeaks.json",
     params_classification_method_name=cfg_clf_sklearn["classifier"],
     params_data_method_name=cfg_clf_sklearn["classifier"]
 )

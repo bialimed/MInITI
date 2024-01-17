@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
 __author__ = 'Frederic Escudie'
-__copyright__ = 'Copyright (C) 2020 IUCT-O'
+__copyright__ = 'Copyright (C) 2020 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
-__email__ = 'escudie.frederic@iuct-oncopole.fr'
-__status__ = 'prod'
 
 import os
 import sys
@@ -36,8 +34,7 @@ def getTemplate():
     <head>
         <title>Run</title>
         <meta charset="UTF-8">
-        <meta name="author" content="Escudie Frederic">
-        <meta name="version" content="1.0.0">
+        <meta name="version" content="##report_version##">
         <meta name="copyright" content="2020 CHU Toulouse">
         <!-- uuid -->
         <script type="text/javascript" charset="utf8" src="resources/uuid_8.3.2.min.js"></script>
@@ -161,6 +158,7 @@ if __name__ == "__main__":
 
     # Process
     report_content = getTemplate()
+    report_content = report_content.replace("##report_version##", __version__)
     report_content = report_content.replace("##class_by_score##", json.dumps(args.class_by_score))
     samples = []
     for curr_report in args.inputs_report:
@@ -175,4 +173,4 @@ if __name__ == "__main__":
     report_content = report_content.replace("##samples##", json.dumps(samples))
     with open(args.output_report, "w") as writer:
         writer.write(report_content)
-    log.info("End of job.")
+    log.info("End of job")

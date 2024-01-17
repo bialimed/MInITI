@@ -5,10 +5,10 @@ __version__ = '1.0.0'
 
 
 def wfReport(
-        in_model,
         params_samples_names,
         in_classification="microsat/{sample}_stabilityStatus.json",
         in_resources_folder=None,
+        in_stables_peaks="microsat/model_stablesPeaks.json",
         out_run_report="report/run.html",
         out_spl_reports="report/{sample}.html",
         out_stderr_cpRsc="logs/reportCpReportResources_stderr.txt",
@@ -43,7 +43,7 @@ def wfReport(
         input:
             classification = in_classification,
             lib = out_resources_folder,  # Not input but necessary to output
-            model = in_model
+            stables_higher_peaks = in_stables_higher_peaks
         output:
             out_spl_reports
         log:
@@ -62,7 +62,7 @@ def wfReport(
             "{params.bin_path}"
             " {params.sample}"
             " {params.data_method_name}"
-            " --input-model {input.model}"
+            " --input-stables-peaks {input.stables_peaks}"
             " --input-report {input.classification}"
             " --output-report {output}"
             " 2> {log}"

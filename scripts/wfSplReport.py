@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 
 __author__ = 'Frederic Escudie'
-__copyright__ = 'Copyright (C) 2020 IUCT-O'
+__copyright__ = 'Copyright (C) 2020 CHU Toulouse'
 __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
-__email__ = 'escudie.frederic@iuct-oncopole.fr'
-__status__ = 'prod'
 
 import os
 import sys
 import json
 import logging
 import argparse
-from anacore.msi.base import Status
-from anacore.msi.reportIO import ReportIO
 
 
 ########################################################################
@@ -21,43 +17,12 @@ from anacore.msi.reportIO import ReportIO
 # FUNCTIONS
 #
 ########################################################################
-def getHigherPeakByLocus(models, min_support_reads=0):
-    """
-    Return length of the higher peak of each model by locus.
-
-    :param models: The list of MSIReport representing the models (status known and stored in Expected result).
-    :type models: list
-    :param min_support_reads: The minimum number of reads on locus to use the stability status of the current model.
-    :type min_support_reads: int
-    :return: By locus the list of higher peak length.
-    :rtype: dict
-    """
-    higher_by_locus = {}
-    models_samples = ReportIO.parse(models)
-    for curr_spl in models_samples:
-        for locus_id, curr_locus in curr_spl.loci.items():
-            if locus_id not in higher_by_locus:
-                higher_by_locus[locus_id] = []
-            if "model" in curr_locus.results:
-                locus_res = curr_locus.results["model"]
-                if locus_res.status == Status.stable and locus_res.data["lengths"].getCount() > min_support_reads / 2:
-                    max_peak = None
-                    max_count = -1
-                    for length, count in locus_res.data["lengths"].items():
-                        if count >= max_count:  # "=" for select the tallest
-                            max_count = count
-                            max_peak = int(length)
-                    higher_by_locus[locus_id].append(max_peak)
-    return higher_by_locus
-
-
 def getTemplate():
     return """<html>
     <head>
         <title>MSI analysis</title>
         <meta charset="UTF-8">
-        <meta name="author" content="Escudie Frederic">
-        <meta name="version" content="1.0.0">
+        <meta name="version" content="##report_version##">
         <meta name="copyright" content="2020 CHU Toulouse">
         <!-- uuid -->
         <script type="text/javascript" charset="utf8" src="resources/uuid_8.3.2.min.js"></script>
@@ -149,12 +114,11 @@ if __name__ == "__main__":
     # Manage parameters
     parser = argparse.ArgumentParser(description="Create HTML report for one sample.")
     parser.add_argument('-d', '--data-method-name', default="alnLength", help='The name of the method storing length distribution. [Default: %(default)s]')
-    parser.add_argument('-u', '--model-min-support', type=int, help='Minimum number of reads/fragments in size distribution to keep a model sample in the stable model peak retrieval process. [Default: %(default)s]')
     parser.add_argument('-s', '--sample-name', help='The sample name.')
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_input = parser.add_argument_group('Inputs')
-    group_input.add_argument('-m', '--input-model', required=True, help='Path to the model file (format: MSIReport).')
     group_input.add_argument('-i', '--input-report', required=True, help='Path to the MSI report file (format: MSIReport).')
+    group_input.add_argument('-p', '--input-stables-peaks', required=True, help='Path to the stable microsatellites most represented length by locus from model (format: JSON).')
     group_output = parser.add_argument_group('Outputs')
     group_output.add_argument('-o', '--output-report', help='Path to the outputted report file (format: HTML).')
     args = parser.parse_args()
@@ -167,13 +131,13 @@ if __name__ == "__main__":
 
     # Process
     report_content = getTemplate()
+    report_content = report_content.replace("##report_version##", __version__)
     report_content = report_content.replace("##sample_name##", json.dumps(args.sample_name))
     report_content = report_content.replace("##data_method##", args.data_method_name)
-    model_min_support = 0 if args.model_min_support is None else args.model_min_support
-    higher_peak_by_locus = getHigherPeakByLocus(args.input_model, model_min_support)
-    report_content = report_content.replace("##model_peaks##", json.dumps(higher_peak_by_locus))
+    with open(args.input_stables_peaks) as reader_peaks:
+        report_content = report_content.replace("##model_peaks##", json.dumps(json.load(reader_peaks)))
     with open(args.input_report) as reader:
         report_content = report_content.replace("##msi_data##", json.dumps(json.load(reader)))
     with open(args.output_report, "w") as writer:
         writer.write(report_content)
-    log.info("End of job.")
+    log.info("End of job")
