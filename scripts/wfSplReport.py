@@ -118,7 +118,7 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--version', action='version', version=__version__)
     group_input = parser.add_argument_group('Inputs')
     group_input.add_argument('-i', '--input-report', required=True, help='Path to the MSI report file (format: MSIReport).')
-    group_input.add_argument('-p', '--input-stables-peaks', required=True, help='Path to the stable microsatellites most represented length by locus from model (format: JSON).')
+    group_input.add_argument('-p', '--input-stable-peaks', required=True, help='Path to the most represented lengths by locus from stable microsatellites model (format: JSON).')
     group_output = parser.add_argument_group('Outputs')
     group_output.add_argument('-o', '--output-report', help='Path to the outputted report file (format: HTML).')
     args = parser.parse_args()
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     report_content = report_content.replace("##report_version##", __version__)
     report_content = report_content.replace("##sample_name##", json.dumps(args.sample_name))
     report_content = report_content.replace("##data_method##", args.data_method_name)
-    with open(args.input_stables_peaks) as reader_peaks:
+    with open(args.input_stable_peaks) as reader_peaks:
         report_content = report_content.replace("##model_peaks##", json.dumps(json.load(reader_peaks)))
     with open(args.input_report) as reader:
         report_content = report_content.replace("##msi_data##", json.dumps(json.load(reader)))

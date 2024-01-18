@@ -4,24 +4,24 @@ __license__ = 'GNU General Public License'
 __version__ = '1.0.0'
 
 
-def modelToStablesPeaks(
+def modelToStablePeaks(
         in_model="microsat/microsatModel.json",
-        out_stables_peaks="microsat/model_stablesPeaks.json",
-        out_stderr="logs/{sample}_modelToStablesPeaks_stderr.txt",
+        out_stable_peaks="microsat/stable_model_peaks.json",
+        out_stderr="logs/modelToStablePeaks_stderr.txt",
         params_model_min_support=None,
         params_keep_outputs=False,
         params_stderr_append=False):
-    """Extract stable microsatellites most represented length by locus from model."""
-    rule modelToStablesPeaks:
+    """Extract most represented lengths by locus from stable microsatellites model."""
+    rule modelToStablePeaks:
         input:
             in_model
         output:
-            out_stables_peaks if params_keep_outputs else temp(out_stables_peaks)
+            out_stable_peaks if params_keep_outputs else temp(out_stable_peaks)
         log:
             out_stderr
         params:
-            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/modelToStablesPeaks.py")),
-            model_min_support = "" if params_model_min_support is None else "--min-support {}".format(params_model_min_support),
+            bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/modelToStablePeaks.py")),
+            model_min_support = "" if params_model_min_support is None else "--min-support {}".format(params_model_min_support)
         resources:
             extra = "",
             mem = "2G",
