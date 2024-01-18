@@ -84,6 +84,9 @@ if aln_pattern is not None:
     samples_names = splFromPattern(aln_pattern, config.get("input").get("excluded_samples"))
 else:
     samples_names = splFromPattern(config.get("input")["R1_pattern"], config.get("input").get("excluded_samples"))
+if len(samples_names) == 0:
+    raise Exception("No sample can be found from the input parameters.")
+
 
 ########################################################################
 #
