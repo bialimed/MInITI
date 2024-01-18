@@ -21,15 +21,18 @@ def modelToStablePeaks(
             out_stderr
         params:
             bin_path = os.path.abspath(os.path.join(workflow.basedir, "scripts/modelToStablePeaks.py")),
-            model_min_support = "" if params_model_min_support is None else "--min-support {}".format(params_model_min_support)
+            model_min_support = "" if params_model_min_support is None else "--min-support {}".format(params_model_min_support),
+            stderr_redirection = "2>" if not params_stderr_append else "2>>"
         resources:
             extra = "",
             mem = "2G",
             partition = "normal"
         threads: 1
+        conda:
+            "envs/anacore-utils.yml"
         shell:
             "{params.bin_path}"
-            " {params.min_support}"
+            " {params.model_min_support}"
             " --input-model {input}"
             " --output-peaks {output}"
             " {params.stderr_redirection} {log}"

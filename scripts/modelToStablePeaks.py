@@ -73,7 +73,7 @@ if __name__ == "__main__":
     log.info("Command: " + " ".join(sys.argv))
 
     # Process
-    higher_peaks_by_locus = getHigherPeakByLocus(args.input_model, args.model_min_support)
+    higher_peaks_by_locus = getHigherPeakByLocus(args.input_model, args.min_support)
     with open(args.output_peaks, "w") as writer:
         json.dump(higher_peaks_by_locus, writer)
     log.info("End of job")
