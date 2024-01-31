@@ -9,10 +9,9 @@
 * [Usage](#usage)
 * [Performances](#performances)
 * [Copyright](#copyright)
-* [Contact](#contact)
 
 ## Description
-This workflow classify microsatellites instability from high througput
+This workflow classify microsatellites instability from high throughput
 sequencing on Illumina's instruments.
 
 Sample classification is based on comparison with a learning model creating from
@@ -64,8 +63,10 @@ duplicates marking.
 comparison to model. Then the sample class is inferred by instability ratio on
 these loci. The classifiers used on loci are:
  * An [mSINGS](https://bitbucket.org/uwlabmed/msings/src/master/) reimplementation,
- * An [MSISensor-pro](https://github.com/xjtu-omics/msisensor-pro) pro algorithm's reimplementation,
- * A classifier from [sklearn](https://scikit-learn.org/stable/) (default: random forest)
+ * An [MSISensor-pro](https://github.com/xjtu-omics/msisensor-pro) pro algorithm's
+ reimplementation,
+ * A classifier from [sklearn](https://scikit-learn.org/stable/) (default: random
+ forest)
 * Finally, results from all classifiers are merged and a report is produced.
 
 ## Installation
@@ -267,7 +268,7 @@ to inspect:
 </figure>
 
 ## Performances
-Performance was evaluated on a dataset from 160 colorectal cancer patients.
+Performance was evaluated on a dataset from 120 colorectal cancer patients.
 Samples were sequenced with a targeted panel (mutation hotspots and MSI) from
 FFPE block. The results summarized in [assessment/report.html](assessment/report.html).
 Commands and configurations used in evaluation process can be found in
@@ -276,6 +277,3 @@ Commands and configurations used in evaluation process can be found in
 ## Copyright
 2022 Laboratoire d'Anatomo-Cytopathologie de l'Institut Universitaire du Cancer
 Toulouse - Oncopole
-
-## Contact
-escudie.frederic@iuct-oncopole.fr
