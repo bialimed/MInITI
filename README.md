@@ -275,5 +275,4 @@ Commands and configurations used in evaluation process can be found in
 `assessment` folder.
 
 ## Copyright
-2022 Laboratoire d'Anatomo-Cytopathologie de l'Institut Universitaire du Cancer
-Toulouse - Oncopole
+2022 Laboratoire d'Anatomo-Cytopathologie du CHU Toulouse
