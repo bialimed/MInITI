@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Escudié"
+  given-names: "Frédéric"
+- family-names: "Larquier"
+  given-names: "Mélanie"
+- family-names: "Grand"
+  given-names: "David"
+- family-names: "Brousset"
+  given-names: "Pierre"
+- family-names: "Selves"
+  given-names: "Janick"
+title: "MInITI"
+version: 1.0.0
+doi: 10.5281/zenodo.11536494
+date-released: 2024-01-31
+url: "https://github.com/bialimed/MInITI"

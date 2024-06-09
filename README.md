@@ -1,6 +1,7 @@
 # <img src="doc/img/logo/MInITI_logo.png" width=60 />MInITI: Microsatellites INstability from hIgh Throughput sequencIng
 
 ![license](https://img.shields.io/badge/license-GPLv3-blue)
+[![DOI](https://zenodo.org/badge/550846970.svg)](https://zenodo.org/doi/10.5281/zenodo.11536493)
 
 ## Table of Contents
 * [Description](#description)
